@@ -2614,7 +2614,9 @@ water의 뜻은?|물|불|흙|바람`
     const abilityBadge = document.createElement('span'); abilityBadge.className = 'monster-ability-badge'; abilityBadge.style.display = 'none';
 
     let hp, damage, ability = null;
-    const loopScale = run.isChallenge ? (1 + (run.challengeLoopCount || 0) * 0.18) : 1;
+    // 도전모드 라운드별 강화율: 완캐 타워 군단(10기 레벨3)의 DPS를 20~30라운드 선에서
+    // 따라잡을 수 있도록 이전(0.18/라운드)보다 훨씬 가파르게 올림.
+    const loopScale = run.isChallenge ? (1 + (run.challengeLoopCount || 0) * 0.5) : 1;
 
     const bossSet = STAGE_BOSSES[getEffectiveStageId()] || STAGE_BOSSES[0];
     if(kind === 'miniboss'){
