@@ -1183,7 +1183,8 @@ water의 뜻은?|물|불|흙|바람`
 
   const GRADE_STAGE_TITLES = {
     '5': ['1단원 · 지층과 화석', '2단원 · 빛의 성질', '3단원 · 용해와 용액', '4단원 · 몸의 구조와 기능'],
-    '6': ['1단원 · 산과 염기', '2단원 · 물체의 운동', '3단원 · 식물의 구조와 기능', '4단원 · 지구의 운동', '보완단원 1', '보완단원 2']
+    '6': ['1단원 · 산과 염기', '2단원 · 물체의 운동', '3단원 · 식물의 구조와 기능', '4단원 · 지구의 운동', '보완단원 1', '보완단원 2'],
+    '6-2': ['1단원 · 계절의 변화']
   };
   const GRADE_STAGE_TEXTS = {
     '5': [
@@ -1369,6 +1370,26 @@ water의 뜻은?|물|불|흙|바람`
 밀물일 때는 썰물일 때보다 바닷물과 육지가 맞닿은 위치가 육지 쪽으로 더 가까워집니다.|O|X
 밀물일 때는 물에 잠기고 썰물일 때는 물 밖으로 드러나는 편평한 땅을 무엇이라고 합니까?|갯벌|모래사장|방파제
 갯벌은 바다로 흘러 들어가는 오염 물질을 걸러 주며, 다양한 생물의 보금자리가 됩니다.|O|X`
+    ],
+    '6-2': [
+`태양이 지표면과 이루는 각을 무엇이라고 합니까?|태양 고도|남중 고도|태양 에너지양|그림자 길이
+태양이 정남쪽에 위치하는 것을 무엇이라고 합니까?|남중|일출|일몰|남중 고도
+태양이 남중했을 때의 태양 고도를 무엇이라고 합니까?|남중 고도|일출 고도|정오 기온|평균 고도
+하루 중 태양 고도가 가장 높은 시각은 언제입니까?|12시 30분 무렵|오전 9시 무렵|오후 6시 무렵|자정 무렵
+하루 동안 태양 고도가 높아질수록 그림자 길이는 어떻게 됩니까?|짧아진다|길어진다|변하지 않는다|두 배로 길어진다
+하루 중 기온이 가장 높은 시각은 태양 고도가 가장 높은 시각과 비교했을 때 어떻습니까?|태양 고도가 가장 높은 시각보다 늦다|태양 고도가 가장 높은 시각과 같다|태양 고도가 가장 높은 시각보다 이르다|아무 관계가 없다
+다음 중 태양의 남중 고도가 가장 높은 계절은 언제입니까?|여름|겨울|봄|가을
+다음 중 낮의 길이가 가장 긴 계절은 언제입니까?|여름|겨울|봄|가을
+다음 중 낮의 길이가 가장 짧은 계절은 언제입니까?|겨울|여름|봄|가을
+태양 고도가 높아지면 일정한 면적의 지표면이 받는 태양 에너지양은 어떻게 됩니까?|많아진다|적어진다|변하지 않는다|태양 고도와 관계없다
+여름이 겨울보다 기온이 높은 까닭으로 가장 알맞은 것은 무엇입니까?|여름에는 태양의 남중 고도가 높아 태양 에너지를 많이 받기 때문이다|여름에는 지구가 태양에 더 가까워지기 때문이다|여름에는 태양의 크기가 커지기 때문이다|여름에는 낮의 길이가 짧아지기 때문이다
+계절의 변화가 생기는 까닭으로 가장 알맞은 것은 무엇입니까?|지구가 자전축이 기울어진 채 태양 주위를 공전하기 때문이다|지구와 태양 사이의 거리가 달라지기 때문이다|태양의 크기가 계절마다 달라지기 때문이다|지구의 자전 속도가 달라지기 때문이다
+지구의 자전축이 수직인 채 태양 주위를 공전한다면 계절은 어떻게 됩니까?|계절 변화가 생기지 않는다|계절 변화가 더 뚜렷해진다|여름만 계속된다|겨울만 계속된다
+지구의 자전축이 기울어진 채 공전할 때, 우리나라가 있는 쪽이 태양을 향해 기울어져 있으면 우리나라는 어떤 계절이 됩니까?|여름|겨울|봄|가을
+우리나라가 여름일 때 남반구는 어떤 계절입니까?|겨울|여름|봄|가을
+태양의 남중 고도가 가장 높은 절기는 언제입니까?|하지|동지|춘분|추분
+태양의 남중 고도가 가장 낮은 절기는 언제입니까?|동지|하지|춘분|추분
+겨울이 여름보다 추운 까닭은 지구가 태양에서 멀어지기 때문이다.|X|O`
     ]
   };
 
@@ -1603,7 +1624,7 @@ water의 뜻은?|물|불|흙|바람`
 
   function defaultGameData(){
     return {
-      grades: { '5': makeGradeData('5'), '6': makeGradeData('6') },
+      grades: { '5': makeGradeData('5'), '6': makeGradeData('6'), '6-2': makeGradeData('6-2') },
       currentGrade: null,
       adminPin: '0914',
       difficulty: null,
@@ -1646,6 +1667,10 @@ water의 뜻은?|물|불|흙|바람`
               if(parsed.difficulty === undefined) parsed.difficulty = null;
               if(parsed.deviceType === undefined) parsed.deviceType = null;
               if(parsed.currentGrade === undefined) parsed.currentGrade = null;
+              // 새로 추가된 학년(예: 6학년 2학기)이 기존 저장 데이터에는 없을 수 있으므로 보충
+              Object.keys(GRADE_STAGE_TITLES).forEach(g => {
+                if(!parsed.grades[g]) parsed.grades[g] = makeGradeData(g);
+              });
               return parsed;
             }
           }
@@ -1997,7 +2022,9 @@ water의 뜻은?|물|불|흙|바람`
   }
 
   function isCharacterUnlocked(c){
-    return c.unlockStage === null || curGrade().progress[c.unlockStage].cleared;
+    if(c.unlockStage === null) return true;
+    const prog = curGrade().progress[c.unlockStage];
+    return !!(prog && prog.cleared);
   }
 
   function renderStageCards(){
@@ -2070,7 +2097,8 @@ water의 뜻은?|물|불|흙|바람`
     rosterSpecial.textContent = c.specialLabel;
 
     if(!unlocked){
-      const reqTitle = curGrade().stages[c.unlockStage].title || (c.unlockStage+1)+'단원';
+      const reqStage = curGrade().stages[c.unlockStage];
+      const reqTitle = (reqStage && reqStage.title) || (c.unlockStage+1)+'단원';
       rosterLockedNote.textContent = `🔒 ${reqTitle} 클리어 시 해금`;
       rosterLockedNote.style.display = 'block';
     }else{
@@ -3360,7 +3388,8 @@ water의 뜻은?|물|불|흙|바람`
   // ---- 학년 선택 ----
   const GRADE_OPTIONS = [
     { key:'5', icon:'📘', name:'5학년', desc:'5학년 1학기 과학' },
-    { key:'6', icon:'📗', name:'6학년', desc:'6학년 1학기 과학' }
+    { key:'6', icon:'📗', name:'6학년', desc:'6학년 1학기 과학' },
+    { key:'6-2', icon:'🍁', name:'6학년 2학기', desc:'6학년 2학기 과학' }
   ];
 
   function renderGradeCards(onDone){
@@ -3440,7 +3469,7 @@ water의 뜻은?|물|불|흙|바람`
     const classdata = params.get('classdata');
     const linkGrade = params.get('grade');
     const linkStageIdx = parseInt(params.get('stage'), 10);
-    if(classdata && (linkGrade === '5' || linkGrade === '6') && !Number.isNaN(linkStageIdx)){
+    if(classdata && linkGrade && GRADE_STAGE_TITLES[linkGrade] && !Number.isNaN(linkStageIdx)){
       const importedStages = await decodeStagesFromShare(decodeURIComponent(classdata));
       const targetStages = gameData.grades[linkGrade].stages;
       if(Array.isArray(importedStages) && importedStages.length > 0 && targetStages[linkStageIdx]){
