@@ -1414,8 +1414,8 @@ water의 뜻은?|물|불|흙|바람`
     { id:0, name:'마법사',         icon:CHAR_IMAGES.ignis,   imgPos:'50% 28%', cost:30, baseDamage:12, baseInterval:1000, baseRange:80,  special:'none', splashRadius:58, unlockStage:null,
       desc:'화염구와 번개를 다루는 아케인 마법사. 폭발이 주변까지 휩쓴다.', specialLabel:'미사일 · 폭발 범위 공격',
       fx:{ type:'missile', icon:'🔥', color:'#f2913d' } },
-    { id:1, name:'황금기사',       icon:CHAR_IMAGES.dwarf,   imgPos:'45% 30%', cost:35, baseDamage:10, baseInterval:950,  baseRange:70,  special:'goldOnHit', goldPerHit:3, unlockStage:0,
-      desc:'사자 방패와 망치를 휘두르는 드워프 전사. 적을 때릴 때마다 금화가 쏟아진다.', specialLabel:'총 · 적중 시 추가 골드 획득',
+    { id:1, name:'황금기사',       icon:CHAR_IMAGES.dwarf,   imgPos:'45% 30%', cost:35, baseDamage:10, baseInterval:950,  baseRange:70,  special:'goldOnKill', goldPerKill:3, unlockStage:0,
+      desc:'사자 방패와 망치를 휘두르는 드워프 전사. 몬스터를 처치할 때마다 금화가 쏟아진다.', specialLabel:'총 · 처치 시 추가 골드 획득',
       fx:{ type:'gun', icon:'🪙', color:'#f2c14e' } },
     { id:2, name:'사냥꾼',         icon:CHAR_IMAGES.ranger,  imgPos:'40% 22%', cost:35, baseDamage:5,  baseInterval:1000, baseRange:95,  special:'slow', slowFactor:0.5, slowDuration:1000, unlockStage:1,
       desc:'쌍석궁과 덫으로 숲을 지키는 사냥꾼. 지속되는 속박의 빛으로 적의 발을 묶는다.', specialLabel:'레이저 · 지속 데미지 + 이동속도 감소',
@@ -3081,12 +3081,14 @@ water의 뜻은?|물|불|흙|바람`
           other.cooldownRemaining = Math.max(0, other.cooldownRemaining - 400);
         }
       }
-    }else if(char.special === 'goldOnHit'){
-      run.gold += char.goldPerHit;
-      run.totalGold += char.goldPerHit;
-      showFloatingText('+' + char.goldPerHit + 'G', 'gain', t.x, t.y);
-      spawnImpact(t.x, t.y, char.fx.color);
-      renderHUD();
+    }else if(char.special === 'goldOnKill'){
+      if(target.resolved){
+        run.gold += char.goldPerKill;
+        run.totalGold += char.goldPerKill;
+        showFloatingText('+' + char.goldPerKill + 'G', 'gain', t.x, t.y);
+        spawnImpact(t.x, t.y, char.fx.color);
+        renderHUD();
+      }
     }
   }
 
