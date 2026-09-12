@@ -2365,6 +2365,8 @@ water의 뜻은?|물|불|흙|바람`
     rosterPortrait.style.objectPosition = c.imgPos || 'center 25%';
     rosterPortrait.classList.toggle('locked', !unlocked);
     rosterLockBadge.style.display = unlocked ? 'none' : 'block';
+    if(unlocked) applySkinToIcon(rosterPortrait);
+    else{ rosterPortrait.style.filter = ''; rosterPortrait.classList.remove('skin-aurora'); }
 
     rosterName.textContent = c.name;
     rosterDesc.textContent = c.desc;
