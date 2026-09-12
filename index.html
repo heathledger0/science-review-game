@@ -577,6 +577,12 @@
     position:absolute; bottom:2%; font-size:32px; z-index:3;
     filter:drop-shadow(0 4px 10px rgba(0,0,0,0.7));
   }
+  .char-grade-badge{
+    position:absolute; top:6px; left:6px; z-index:4;
+    background:var(--bg-panel-2); border:1.5px solid var(--gold); color:var(--gold);
+    font-family:var(--font-mono); font-size:12px; font-weight:700; border-radius:8px; padding:2px 7px;
+  }
+  .char-grade-info{text-align:center; color:var(--teal); font-size:11.5px; margin:0 0 4px; font-family:var(--font-mono);}
   .char-dots{display:flex; justify-content:center; gap:6px; margin:10px 0 6px;}
   .char-dot{width:7px; height:7px; border-radius:50%; background:var(--panel-border);}
   .char-dot.active{background:var(--teal);}
@@ -805,6 +811,14 @@
   .gacha-pull10{background:linear-gradient(180deg,#e0c3ff,#a9a4c7); color:#241f3d;}
   .gacha-result-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(72px,1fr)); gap:8px; margin:10px 0;}
   .gacha-collection-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(72px,1fr)); gap:8px; margin-bottom:14px;}
+  .char-grade-list{display:flex; flex-direction:column; gap:6px; margin-bottom:14px;}
+  .char-grade-row{display:flex; align-items:center; gap:10px; background:var(--bg-panel); border:1px solid var(--panel-border); border-radius:12px; padding:7px 10px;}
+  .char-grade-icon{width:28px; height:28px; border-radius:50%; object-fit:cover; flex-shrink:0;}
+  .char-grade-name{font-size:11.5px; width:52px; flex-shrink:0;}
+  .char-grade-tag{font-family:var(--font-mono); font-size:10px; font-weight:700; color:var(--gold); width:26px; flex-shrink:0;}
+  .char-grade-bar-track{flex:1; height:6px; background:var(--bg-panel-2); border-radius:4px; overflow:hidden;}
+  .char-grade-bar-fill{height:100%; background:var(--teal); border-radius:4px;}
+  .char-grade-max{font-size:9.5px; color:var(--gold); flex-shrink:0;}
   .skin-card{
     position:relative; background:var(--bg-panel); border:2px solid var(--panel-border); border-radius:12px;
     padding:8px 4px; text-align:center; cursor:pointer; transition:transform 0.15s;
@@ -818,6 +832,7 @@
   .skin-card-name{display:block; font-size:10px; color:var(--text);}
   .skin-card-rarity{display:block; font-size:8.5px; color:var(--lavender); font-family:var(--font-mono);}
   .skin-card-new{position:absolute; top:-6px; right:-6px; background:var(--crimson); color:#fff; font-size:8px; font-weight:700; border-radius:8px; padding:1px 5px;}
+  .skin-card-shard{display:block; font-size:8px; color:var(--teal); margin-top:2px; line-height:1.3;}
   .skin-aurora{animation:aurora-spin 3s linear infinite;}
   @keyframes aurora-spin{
     0%{filter:hue-rotate(0deg) saturate(2) brightness(1.1) drop-shadow(0 0 10px #f2c14e);}
@@ -1020,6 +1035,8 @@
         </div>
         <p class="toast" id="gachaToast"></p>
         <div class="gacha-result-grid" id="gachaResultGrid"></div>
+        <label class="field-label">캐릭터 승급 현황 · 중복 뽑기가 조각이 돼요</label>
+        <div class="char-grade-list" id="charGradeList"></div>
         <label class="field-label">보유 스킨 · 탭해서 장착</label>
         <div class="gacha-collection-grid" id="gachaCollectionGrid"></div>
         <div class="setup-actions">
@@ -1037,11 +1054,13 @@
             <div class="char-particles" id="rosterParticles"><span></span><span></span><span></span><span></span></div>
             <img class="char-portrait" id="rosterPortrait" src="" alt="">
             <span class="char-lock-badge" id="rosterLockBadge" style="display:none;">🔒</span>
+            <span class="char-grade-badge" id="rosterGradeBadge">C</span>
           </div>
           <button class="char-nav-btn" id="rosterNextBtn" type="button">›</button>
         </div>
         <div class="char-dots" id="rosterDots"></div>
         <h2 class="char-name" id="rosterName">마법사</h2>
+        <p class="char-grade-info" id="rosterGradeInfo"></p>
         <p class="char-desc" id="rosterDesc"></p>
         <p class="char-special" id="rosterSpecial"></p>
         <p class="char-locked-note" id="rosterLockedNote" style="display:none;"></p>
@@ -1536,6 +1555,12 @@ water의 뜻은?|물|불|흙|바람`
   const GACHA_DUP_REFUND = 8;
   const GACHA_PITY_LIMIT = 15;
 
+  // 캐릭터 등급: 전부 C등급으로 시작해서 뽑기 중복 시 나오는 조각으로 SSR까지 승급.
+  // 등급 차이는 총 25%로 작게 잡아서, 운이 나빠도 결국 다 SSR까지 갈 수 있고 "속도"만 달라지게 한다.
+  const CHAR_GRADE_ORDER = ['C','B','A','S','SS','SSR'];
+  const CHAR_GRADE_MULT = { C:1.00, B:1.05, A:1.10, S:1.15, SS:1.20, SSR:1.25 };
+  const CHAR_GRADE_SHARDS_NEEDED = 3;
+
   const MAX_TOWER_LEVEL = 3;
   const LEVEL_DAMAGE_MULT = [1, 1.6, 2.3];
   const LEVEL_INTERVAL_MULT = [1, 0.85, 0.72];
@@ -1623,6 +1648,7 @@ water의 뜻은?|물|불|흙|바람`
   const gachaToast = document.getElementById('gachaToast');
   const gachaResultGrid = document.getElementById('gachaResultGrid');
   const gachaCollectionGrid = document.getElementById('gachaCollectionGrid');
+  const charGradeList = document.getElementById('charGradeList');
   const gachaBackBtn = document.getElementById('gachaBackBtn');
   const clearStarDust = document.getElementById('clearStarDust');
   const overStarDust = document.getElementById('overStarDust');
@@ -1640,6 +1666,8 @@ water의 뜻은?|물|불|흙|바람`
   const rosterAura = document.getElementById('rosterAura');
   const rosterPortrait = document.getElementById('rosterPortrait');
   const rosterLockBadge = document.getElementById('rosterLockBadge');
+  const rosterGradeBadge = document.getElementById('rosterGradeBadge');
+  const rosterGradeInfo = document.getElementById('rosterGradeInfo');
   const rosterDotsEl = document.getElementById('rosterDots');
   const rosterName = document.getElementById('rosterName');
   const rosterDesc = document.getElementById('rosterDesc');
@@ -1752,7 +1780,8 @@ water의 뜻은?|물|불|흙|바람`
       starDust: 0,
       gachaOwned: ['basic'],
       equippedSkin: 'basic',
-      gachaPity: 0
+      gachaPity: 0,
+      charGrades: CHARACTERS.map(()=>({ grade:'C', shards:0 }))
     };
   }
 
@@ -1814,6 +1843,8 @@ water의 뜻은?|물|불|흙|바람`
               if(!Array.isArray(parsed.gachaOwned)) parsed.gachaOwned = ['basic'];
               if(!parsed.equippedSkin) parsed.equippedSkin = 'basic';
               if(typeof parsed.gachaPity !== 'number') parsed.gachaPity = 0;
+              if(!Array.isArray(parsed.charGrades)) parsed.charGrades = CHARACTERS.map(()=>({ grade:'C', shards:0 }));
+              else CHARACTERS.forEach((c,i)=>{ if(!parsed.charGrades[i]) parsed.charGrades[i] = { grade:'C', shards:0 }; });
               // 새로 추가된 학년(예: 6학년 2학기)이 기존 저장 데이터에는 없을 수 있으므로 보충
               Object.keys(GRADE_STAGE_TITLES).forEach(g => {
                 if(!parsed.grades[g]) parsed.grades[g] = makeGradeData(g);
@@ -2177,6 +2208,32 @@ water의 뜻은?|물|불|흙|바람`
     return !!(prog && prog.cleared);
   }
 
+  // ---- 캐릭터 등급(C~SSR) ----
+  function getCharGradeEntry(charId){
+    return gameData.charGrades[charId] || (gameData.charGrades[charId] = { grade:'C', shards:0 });
+  }
+  function getCharGrade(charId){
+    return getCharGradeEntry(charId).grade;
+  }
+  function getCharGradeMult(charId){
+    return CHAR_GRADE_MULT[getCharGrade(charId)] || 1;
+  }
+  // 뽑기에서 중복이 나오면 무작위 캐릭터에게 조각을 하나 주고, 다 모이면 자동으로 다음 등급으로 승급시킨다.
+  // 등급차가 작아서(최대 25%) 운이 나빠도 결국 전부 SSR까지 가고, 운은 그 속도만 좌우한다.
+  function grantRandomCharacterShard(){
+    const charId = Math.floor(Math.random() * CHARACTERS.length);
+    const entry = getCharGradeEntry(charId);
+    const curIdx = CHAR_GRADE_ORDER.indexOf(entry.grade);
+    if(curIdx >= CHAR_GRADE_ORDER.length - 1) return { charId, upgradedTo: null, capped: true };
+    entry.shards++;
+    if(entry.shards >= CHAR_GRADE_SHARDS_NEEDED){
+      entry.shards = 0;
+      entry.grade = CHAR_GRADE_ORDER[curIdx + 1];
+      return { charId, upgradedTo: entry.grade, capped: false };
+    }
+    return { charId, upgradedTo: null, capped: false };
+  }
+
   // ---- 별조각 뽑기(가챠) ----
   function getEquippedSkin(){
     return GACHA_SKINS.find(s => s.id === gameData.equippedSkin) || GACHA_SKINS[0];
@@ -2222,12 +2279,14 @@ water의 뜻은?|물|불|흙|바람`
       gameData.gachaPity = 0;
     }
     const isNew = !gameData.gachaOwned.includes(skin.id);
+    let shardResult = null;
     if(isNew){
       gameData.gachaOwned.push(skin.id);
     }else{
       gameData.starDust += GACHA_DUP_REFUND;
+      shardResult = grantRandomCharacterShard();
     }
-    return { skin, isNew };
+    return { skin, isNew, shardResult };
   }
 
   async function doGachaPull(count){
@@ -2246,7 +2305,7 @@ water의 뜻은?|물|불|흙|바람`
 
   function renderGachaResults(results){
     gachaResultGrid.innerHTML = '';
-    results.forEach(({skin, isNew})=>{
+    results.forEach(({skin, isNew, shardResult})=>{
       const card = document.createElement('div');
       card.className = 'skin-card rarity-' + skin.rarity;
       if(skin.animated) card.classList.add('skin-aurora');
@@ -2257,13 +2316,48 @@ water의 뜻은?|물|불|흙|바람`
       if(isNew){
         const badge = document.createElement('span'); badge.className = 'skin-card-new'; badge.textContent = 'NEW';
         card.appendChild(badge);
+      }else if(shardResult){
+        const charName = CHARACTERS[shardResult.charId].name;
+        const note = document.createElement('span'); note.className = 'skin-card-shard';
+        note.textContent = shardResult.upgradedTo
+          ? `🎉 ${charName} ${shardResult.upgradedTo}등급!`
+          : (shardResult.capped ? `${charName} MAX` : `🔩 ${charName} 조각+1`);
+        card.appendChild(note);
       }
       gachaResultGrid.appendChild(card);
     });
   }
 
+  function renderCharGradeList(){
+    charGradeList.innerHTML = '';
+    CHARACTERS.forEach(c=>{
+      const entry = getCharGradeEntry(c.id);
+      const row = document.createElement('div');
+      row.className = 'char-grade-row';
+      const icon = document.createElement('img'); icon.className = 'char-grade-icon'; icon.src = c.icon; icon.style.objectPosition = c.imgPos || 'center 20%';
+      applySkinToIcon(icon);
+      const name = document.createElement('span'); name.className = 'char-grade-name'; name.textContent = c.name;
+      const tag = document.createElement('span'); tag.className = 'char-grade-tag'; tag.textContent = entry.grade;
+      row.appendChild(icon); row.appendChild(name); row.appendChild(tag);
+      if(entry.grade === 'SSR'){
+        const max = document.createElement('span'); max.className = 'char-grade-max'; max.textContent = 'MAX';
+        row.appendChild(max);
+      }else{
+        const track = document.createElement('div'); track.className = 'char-grade-bar-track';
+        const fill = document.createElement('div'); fill.className = 'char-grade-bar-fill';
+        fill.style.width = Math.round((entry.shards / CHAR_GRADE_SHARDS_NEEDED) * 100) + '%';
+        track.appendChild(fill);
+        row.appendChild(track);
+        const frac = document.createElement('span'); frac.className = 'char-grade-max'; frac.textContent = `${entry.shards}/${CHAR_GRADE_SHARDS_NEEDED}`;
+        row.appendChild(frac);
+      }
+      charGradeList.appendChild(row);
+    });
+  }
+
   function renderGachaScreen(){
     gachaBalanceValue.textContent = gameData.starDust;
+    renderCharGradeList();
     gachaCollectionGrid.innerHTML = '';
     GACHA_SKINS.forEach(skin=>{
       const owned = gameData.gachaOwned.includes(skin.id);
@@ -2371,6 +2465,15 @@ water의 뜻은?|물|불|흙|바람`
     rosterName.textContent = c.name;
     rosterDesc.textContent = c.desc;
     rosterSpecial.textContent = c.specialLabel;
+
+    const gradeEntry = getCharGradeEntry(c.id);
+    rosterGradeBadge.textContent = gradeEntry.grade;
+    const bonusPct = Math.round((CHAR_GRADE_MULT[gradeEntry.grade] - 1) * 100);
+    if(gradeEntry.grade === 'SSR'){
+      rosterGradeInfo.textContent = `${gradeEntry.grade}등급 · 공격력 +${bonusPct}% (최고 등급)`;
+    }else{
+      rosterGradeInfo.textContent = `${gradeEntry.grade}등급 · 공격력 +${bonusPct}% · 다음 등급까지 조각 ${gradeEntry.shards}/${CHAR_GRADE_SHARDS_NEEDED}`;
+    }
 
     if(!unlocked){
       const reqStage = curGrade().stages[c.unlockStage];
@@ -2797,7 +2900,7 @@ water의 뜻은?|물|불|흙|바람`
 
   // ---- 타워 건설 & 업그레이드 (경로 근처 자유 배치, 캐릭터별 한 종류) ----
   function getTowerCurrentDamage(t){
-    return Math.round(t.baseDamage * LEVEL_DAMAGE_MULT[t.level-1]);
+    return Math.round(t.baseDamage * LEVEL_DAMAGE_MULT[t.level-1] * getCharGradeMult(t.charId));
   }
   function getTowerCurrentInterval(t){
     return Math.round(t.baseInterval * LEVEL_INTERVAL_MULT[t.level-1]);
