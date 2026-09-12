@@ -786,6 +786,45 @@
   }
   @keyframes pulse{0%,100%{opacity:1;} 50%{opacity:0.5;}}
 
+  .gacha-entry-btn{
+    display:flex; align-items:center; justify-content:space-between; width:100%;
+    background:linear-gradient(180deg,#2a2452,var(--bg-panel-2)); border:1px solid var(--gold);
+    color:var(--gold); border-radius:14px; padding:10px 14px; font-weight:700; font-size:13px;
+    margin:10px 0; font-family:var(--font-body);
+  }
+  .gacha-entry-balance{font-family:var(--font-mono); font-size:14px;}
+  .gacha-balance-row{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    background:var(--bg-panel); border:1px solid var(--panel-border); border-radius:14px;
+    padding:12px; margin-bottom:14px;
+  }
+  .gacha-balance-label{font-size:12px; color:var(--lavender);}
+  .gacha-balance-value{font-family:var(--font-mono); font-size:20px; font-weight:700; color:var(--gold);}
+  .gacha-pull-actions{display:flex; gap:10px; margin-bottom:8px;}
+  .gacha-pull-actions .btn{flex:1;}
+  .gacha-pull10{background:linear-gradient(180deg,#e0c3ff,#a9a4c7); color:#241f3d;}
+  .gacha-result-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(72px,1fr)); gap:8px; margin:10px 0;}
+  .gacha-collection-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(72px,1fr)); gap:8px; margin-bottom:14px;}
+  .skin-card{
+    position:relative; background:var(--bg-panel); border:2px solid var(--panel-border); border-radius:12px;
+    padding:8px 4px; text-align:center; cursor:pointer; transition:transform 0.15s;
+  }
+  .skin-card:active{transform:scale(0.95);}
+  .skin-card.locked{opacity:0.4; cursor:default;}
+  .skin-card.equipped{border-color:var(--teal); box-shadow:0 0 10px rgba(83,216,251,0.5);}
+  .skin-card.rarity-rare{border-color:var(--teal);}
+  .skin-card.rarity-legendary{border-color:var(--gold); box-shadow:0 0 8px rgba(242,193,78,0.4);}
+  .skin-card-icon{width:36px; height:36px; border-radius:50%; object-fit:cover; margin:0 auto 4px;}
+  .skin-card-name{display:block; font-size:10px; color:var(--text);}
+  .skin-card-rarity{display:block; font-size:8.5px; color:var(--lavender); font-family:var(--font-mono);}
+  .skin-card-new{position:absolute; top:-6px; right:-6px; background:var(--crimson); color:#fff; font-size:8px; font-weight:700; border-radius:8px; padding:1px 5px;}
+  .skin-aurora{animation:aurora-spin 3s linear infinite;}
+  @keyframes aurora-spin{
+    0%{filter:hue-rotate(0deg) saturate(2) brightness(1.1) drop-shadow(0 0 10px #f2c14e);}
+    50%{filter:hue-rotate(180deg) saturate(2) brightness(1.1) drop-shadow(0 0 10px #e94560);}
+    100%{filter:hue-rotate(360deg) saturate(2) brightness(1.1) drop-shadow(0 0 10px #f2c14e);}
+  }
+
   /* 짧은 폰 가로모드(세로 공간이 빠듯한 화면)에서 게임 화면 요소를 더 압축 — 자동감지 기본값 */
   @media (max-height:430px){
     #gameScreen{ padding:5px 10px 5px; }
@@ -942,6 +981,10 @@
           <div class="hearts" id="mapHeartsWrap"></div>
           <div class="run-score">GOLD <span id="mapScoreValue">0</span></div>
         </div>
+        <button class="gacha-entry-btn" id="gachaEntryBtn" type="button">
+          <span>🌟 별조각 뽑기</span>
+          <span class="gacha-entry-balance" id="gachaEntryBalance">0</span>
+        </button>
         <div class="settings-row">
           <button class="settings-pill" id="deviceBarBtn" type="button">
             <span class="settings-pill-label">기기</span>
@@ -961,6 +1004,27 @@
           <button class="btn btn-ghost" id="editQuestionsBtn" type="button">문제 수정하기</button>
         </div>
         <p class="toast" id="mapToast"></p>
+      </section>
+
+      <section id="gachaScreen" class="view">
+        <p class="eyebrow">Star Gacha</p>
+        <h1 class="title" style="font-size:22px;">별조각 뽑기</h1>
+        <p class="subtitle">퀴즈를 잘 풀수록 별조각을 많이 얻어요 · 뽑은 스킨은 타워 색깔을 바꿔줘요</p>
+        <div class="gacha-balance-row">
+          <span class="gacha-balance-label">보유 별조각</span>
+          <span class="gacha-balance-value" id="gachaBalanceValue">0</span>
+        </div>
+        <div class="gacha-pull-actions">
+          <button class="btn btn-primary" id="gachaPull1Btn" type="button">1회 뽑기 (15🌟)</button>
+          <button class="btn btn-primary gacha-pull10" id="gachaPull10Btn" type="button">10회 뽑기 (140🌟)</button>
+        </div>
+        <p class="toast" id="gachaToast"></p>
+        <div class="gacha-result-grid" id="gachaResultGrid"></div>
+        <label class="field-label">보유 스킨 · 탭해서 장착</label>
+        <div class="gacha-collection-grid" id="gachaCollectionGrid"></div>
+        <div class="setup-actions">
+          <button class="btn btn-ghost" id="gachaBackBtn" type="button">지도로</button>
+        </div>
       </section>
 
       <section id="characterRosterScreen" class="view">
@@ -1077,6 +1141,7 @@
         <div class="stat-grid">
           <div class="stat"><span class="stat-label">이번 스테이지에서 얻은 골드</span><span class="stat-value" id="clearGained">0</span></div>
           <div class="stat"><span class="stat-label">누적 골드</span><span class="stat-value" id="clearTotal">0</span></div>
+          <div class="stat"><span class="stat-label">획득한 별조각</span><span class="stat-value" id="clearStarDust">0🌟</span></div>
         </div>
         <p class="new-best">❤️ 보너스 목숨 +1!</p>
         <p class="new-best" id="newCharacterUnlock" style="display:none;"></p>
@@ -1095,6 +1160,7 @@
           <div class="stat" id="overSurvivalWrap" style="display:none;"><span class="stat-label">생존 시간</span><span class="stat-value" id="overSurvival">0:00</span></div>
           <div class="stat"><span class="stat-label">총 획득 골드</span><span class="stat-value" id="overScore">0</span></div>
           <div class="stat"><span class="stat-label">최대 콤보</span><span class="stat-value" id="overCombo">0</span></div>
+          <div class="stat"><span class="stat-label">획득한 별조각</span><span class="stat-value" id="overStarDust">0🌟</span></div>
         </div>
         <p class="new-best" id="overNewBest" style="display:none;">🏆 새로운 최고 기록!</p>
         <div class="setup-actions">
@@ -1450,6 +1516,26 @@ water의 뜻은?|물|불|흙|바람`
       desc:'시간을 다루는 노마법사. 적은 느리게, 주변 아군 타워는 더 빠르게 만든다.', specialLabel:'총 · 시간 왜곡(감속) + 주변 타워 공속 지원',
       fx:{ type:'gun', icon:'⏱️', color:'#c9b6ff' } }
   ];
+  // 뽑기(가챠)로 얻는 타워 스킨: 색 필터만 입혀서 새 아트 없이 외형을 바꾼다.
+  const GACHA_SKINS = [
+    { id:'basic', name:'기본', rarity:'basic', filter:'none' },
+    { id:'shadow', name:'그림자', rarity:'common', weight:20, filter:'grayscale(0.45) brightness(0.85) contrast(1.15)' },
+    { id:'cool', name:'청량', rarity:'common', weight:20, filter:'hue-rotate(160deg) saturate(1.3)' },
+    { id:'verdant', name:'새싹', rarity:'common', weight:20, filter:'hue-rotate(70deg) saturate(1.35)' },
+    { id:'sakura', name:'벚꽃', rarity:'common', weight:20, filter:'hue-rotate(-30deg) saturate(1.4) brightness(1.05)' },
+    { id:'deepsea', name:'심해', rarity:'rare', weight:12, filter:'hue-rotate(190deg) saturate(1.7) brightness(0.95) drop-shadow(0 0 6px #53d8fb)' },
+    { id:'magma', name:'용암', rarity:'rare', weight:12, filter:'hue-rotate(-150deg) saturate(1.9) brightness(1.1) drop-shadow(0 0 6px #ff6b4a)' },
+    { id:'frost', name:'서리', rarity:'rare', weight:12, filter:'hue-rotate(200deg) saturate(0.6) brightness(1.3) drop-shadow(0 0 6px #bdf1ff)' },
+    { id:'golden', name:'황금', rarity:'legendary', weight:2, filter:'sepia(0.6) saturate(3) hue-rotate(-10deg) brightness(1.15) drop-shadow(0 0 10px #f2c14e)' },
+    { id:'aurora', name:'오로라', rarity:'legendary', weight:2, filter:'', animated:true }
+  ];
+  const GACHA_RARITY_LABEL = { basic:'기본', common:'일반', rare:'희귀', legendary:'전설' };
+  const GACHA_PULL_POOL = GACHA_SKINS.filter(s => s.rarity !== 'basic');
+  const GACHA_SINGLE_COST = 15;
+  const GACHA_TEN_COST = 140;
+  const GACHA_DUP_REFUND = 8;
+  const GACHA_PITY_LIMIT = 15;
+
   const MAX_TOWER_LEVEL = 3;
   const LEVEL_DAMAGE_MULT = [1, 1.6, 2.3];
   const LEVEL_INTERVAL_MULT = [1, 0.85, 0.72];
@@ -1529,6 +1615,17 @@ water의 뜻은?|물|불|흙|바람`
   const mapHeartsWrap = document.getElementById('mapHeartsWrap');
   const mapScoreValue = document.getElementById('mapScoreValue');
   const stageCardsEl = document.getElementById('stageCards');
+  const gachaEntryBtn = document.getElementById('gachaEntryBtn');
+  const gachaEntryBalance = document.getElementById('gachaEntryBalance');
+  const gachaBalanceValue = document.getElementById('gachaBalanceValue');
+  const gachaPull1Btn = document.getElementById('gachaPull1Btn');
+  const gachaPull10Btn = document.getElementById('gachaPull10Btn');
+  const gachaToast = document.getElementById('gachaToast');
+  const gachaResultGrid = document.getElementById('gachaResultGrid');
+  const gachaCollectionGrid = document.getElementById('gachaCollectionGrid');
+  const gachaBackBtn = document.getElementById('gachaBackBtn');
+  const clearStarDust = document.getElementById('clearStarDust');
+  const overStarDust = document.getElementById('overStarDust');
   const difficultyCardsEl = document.getElementById('difficultyCards');
   const difficultyBarBtn = document.getElementById('difficultyBarBtn');
   const difficultyBarValue = document.getElementById('difficultyBarValue');
@@ -1651,7 +1748,11 @@ water의 뜻은?|물|불|흙|바람`
       currentGrade: null,
       adminPin: '0914',
       difficulty: null,
-      deviceType: null
+      deviceType: null,
+      starDust: 0,
+      gachaOwned: ['basic'],
+      equippedSkin: 'basic',
+      gachaPity: 0
     };
   }
 
@@ -1666,12 +1767,31 @@ water의 뜻은?|물|불|흙|바람`
     ]);
   }
 
+  // window.storage는 특정 플랫폼 웹뷰에서만 주입되는 저장소라, 일반 브라우저(깃허브 페이지 등)에서는
+  // localStorage로 대체해야 새로고침 후에도 진행 상황(별조각, 캐릭터 해금 등)이 남는다.
+  async function storageGetValue(key){
+    if(window.storage){
+      try{
+        const res = await withTimeout(window.storage.get(key, false), 4000);
+        return (res && res.value) ? res.value : null;
+      }catch(e){ return null; }
+    }
+    try{ return localStorage.getItem(key); }catch(e){ return null; }
+  }
+  async function storageSetValue(key, value){
+    if(window.storage){
+      try{ await withTimeout(window.storage.set(key, value, false), 4000); }catch(e){}
+      return;
+    }
+    try{ localStorage.setItem(key, value); }catch(e){}
+  }
+
   async function loadGameData(){
     try{
-      if(window.storage){
-        const res = await withTimeout(window.storage.get(STORAGE_KEY, false), 4000);
-        if(res && res.value){
-          const parsed = JSON.parse(res.value);
+      {
+        const rawValue = await storageGetValue(STORAGE_KEY);
+        if(rawValue){
+          const parsed = JSON.parse(rawValue);
           if(parsed){
             // 구버전(학년 구분 없던 시절) 저장 데이터를 5학년 데이터로 마이그레이션
             if(!parsed.grades && Array.isArray(parsed.stages) && parsed.stages.length === STAGE_COUNT){
@@ -1690,6 +1810,10 @@ water의 뜻은?|물|불|흙|바람`
               if(parsed.difficulty === undefined) parsed.difficulty = null;
               if(parsed.deviceType === undefined) parsed.deviceType = null;
               if(parsed.currentGrade === undefined) parsed.currentGrade = null;
+              if(typeof parsed.starDust !== 'number') parsed.starDust = 0;
+              if(!Array.isArray(parsed.gachaOwned)) parsed.gachaOwned = ['basic'];
+              if(!parsed.equippedSkin) parsed.equippedSkin = 'basic';
+              if(typeof parsed.gachaPity !== 'number') parsed.gachaPity = 0;
               // 새로 추가된 학년(예: 6학년 2학기)이 기존 저장 데이터에는 없을 수 있으므로 보충
               Object.keys(GRADE_STAGE_TITLES).forEach(g => {
                 if(!parsed.grades[g]) parsed.grades[g] = makeGradeData(g);
@@ -1701,14 +1825,12 @@ water의 뜻은?|물|불|흙|바람`
       }
     }catch(e){}
     try{
-      if(window.storage){
-        const legacy = await withTimeout(window.storage.get(LEGACY_TEXT_KEY, false), 4000);
-        if(legacy && legacy.value){
-          const gdInit = defaultGameData();
-          gdInit.grades['5'].stages[0].text = legacy.value;
-          gdInit.currentGrade = '5';
-          return gdInit;
-        }
+      const legacyValue = await storageGetValue(LEGACY_TEXT_KEY);
+      if(legacyValue){
+        const gdInit = defaultGameData();
+        gdInit.grades['5'].stages[0].text = legacyValue;
+        gdInit.currentGrade = '5';
+        return gdInit;
       }
     }catch(e){}
     return defaultGameData();
@@ -1716,7 +1838,7 @@ water의 뜻은?|물|불|흙|바람`
 
   let saveDebounce;
   async function saveGameDataNow(){
-    try{ if(window.storage) await withTimeout(window.storage.set(STORAGE_KEY, JSON.stringify(gameData), false), 4000); }catch(e){}
+    try{ await storageSetValue(STORAGE_KEY, JSON.stringify(gameData)); }catch(e){}
   }
   function scheduleSave(){
     clearTimeout(saveDebounce);
@@ -1773,6 +1895,11 @@ water의 뜻은?|물|불|흙|바람`
     mapToast.textContent = msg;
     mapToast.classList.add('show');
     setTimeout(()=>mapToast.classList.remove('show'), 2200);
+  }
+  function showGachaToast(msg){
+    gachaToast.textContent = msg;
+    gachaToast.classList.add('show');
+    setTimeout(()=>gachaToast.classList.remove('show'), 2200);
   }
 
   function updateCount(){
@@ -2050,7 +2177,131 @@ water의 뜻은?|물|불|흙|바람`
     return !!(prog && prog.cleared);
   }
 
+  // ---- 별조각 뽑기(가챠) ----
+  function getEquippedSkin(){
+    return GACHA_SKINS.find(s => s.id === gameData.equippedSkin) || GACHA_SKINS[0];
+  }
+
+  function applySkinToIcon(iconEl){
+    const skin = getEquippedSkin();
+    iconEl.classList.remove('skin-aurora');
+    if(skin.animated){
+      iconEl.classList.add('skin-aurora');
+      iconEl.style.filter = '';
+    }else{
+      iconEl.style.filter = skin.filter === 'none' ? '' : skin.filter;
+    }
+  }
+
+  function awardStarDust(amount){
+    amount = Math.max(0, Math.round(amount));
+    gameData.starDust += amount;
+    return amount;
+  }
+
+  function pickWeightedSkin(){
+    const totalWeight = GACHA_PULL_POOL.reduce((sum, s) => sum + s.weight, 0);
+    let roll = Math.random() * totalWeight;
+    for(const s of GACHA_PULL_POOL){
+      roll -= s.weight;
+      if(roll <= 0) return s;
+    }
+    return GACHA_PULL_POOL[GACHA_PULL_POOL.length-1];
+  }
+
+  function pullOnce(){
+    let skin = pickWeightedSkin();
+    if(skin.rarity === 'common'){
+      gameData.gachaPity = (gameData.gachaPity||0) + 1;
+      if(gameData.gachaPity >= GACHA_PITY_LIMIT){
+        const rarePool = GACHA_PULL_POOL.filter(s => s.rarity === 'rare' || s.rarity === 'legendary');
+        skin = rarePool[Math.floor(Math.random()*rarePool.length)];
+        gameData.gachaPity = 0;
+      }
+    }else{
+      gameData.gachaPity = 0;
+    }
+    const isNew = !gameData.gachaOwned.includes(skin.id);
+    if(isNew){
+      gameData.gachaOwned.push(skin.id);
+    }else{
+      gameData.starDust += GACHA_DUP_REFUND;
+    }
+    return { skin, isNew };
+  }
+
+  async function doGachaPull(count){
+    const cost = count === 10 ? GACHA_TEN_COST : GACHA_SINGLE_COST;
+    if(gameData.starDust < cost){
+      showGachaToast('별조각이 부족해요');
+      return;
+    }
+    gameData.starDust -= cost;
+    const results = [];
+    for(let i=0;i<count;i++) results.push(pullOnce());
+    await saveGameDataNow();
+    renderGachaResults(results);
+    renderGachaScreen();
+  }
+
+  function renderGachaResults(results){
+    gachaResultGrid.innerHTML = '';
+    results.forEach(({skin, isNew})=>{
+      const card = document.createElement('div');
+      card.className = 'skin-card rarity-' + skin.rarity;
+      if(skin.animated) card.classList.add('skin-aurora');
+      else card.style.filter = skin.filter === 'none' ? '' : skin.filter;
+      const name = document.createElement('span'); name.className = 'skin-card-name'; name.textContent = skin.name;
+      const rarity = document.createElement('span'); rarity.className = 'skin-card-rarity'; rarity.textContent = GACHA_RARITY_LABEL[skin.rarity];
+      card.appendChild(name); card.appendChild(rarity);
+      if(isNew){
+        const badge = document.createElement('span'); badge.className = 'skin-card-new'; badge.textContent = 'NEW';
+        card.appendChild(badge);
+      }
+      gachaResultGrid.appendChild(card);
+    });
+  }
+
+  function renderGachaScreen(){
+    gachaBalanceValue.textContent = gameData.starDust;
+    gachaCollectionGrid.innerHTML = '';
+    GACHA_SKINS.forEach(skin=>{
+      const owned = gameData.gachaOwned.includes(skin.id);
+      const equipped = gameData.equippedSkin === skin.id;
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'skin-card rarity-' + skin.rarity + (owned ? '' : ' locked') + (equipped ? ' equipped' : '');
+      if(owned){
+        if(skin.animated) card.classList.add('skin-aurora');
+        else card.style.filter = skin.filter === 'none' ? '' : skin.filter;
+      }
+      const name = document.createElement('span'); name.className = 'skin-card-name'; name.textContent = owned ? skin.name : '???';
+      const rarity = document.createElement('span'); rarity.className = 'skin-card-rarity'; rarity.textContent = GACHA_RARITY_LABEL[skin.rarity];
+      card.appendChild(name); card.appendChild(rarity);
+      card.addEventListener('click', async ()=>{
+        if(!owned) return;
+        gameData.equippedSkin = skin.id;
+        await saveGameDataNow();
+        renderGachaScreen();
+        renderTowerBar();
+      });
+      gachaCollectionGrid.appendChild(card);
+    });
+  }
+
+  gachaEntryBtn.addEventListener('click', ()=>{
+    renderGachaScreen();
+    gachaResultGrid.innerHTML = '';
+    showView('gachaScreen');
+  });
+  gachaBackBtn.addEventListener('click', ()=>{
+    showView('stageSelectScreen');
+  });
+  gachaPull1Btn.addEventListener('click', ()=> doGachaPull(1));
+  gachaPull10Btn.addEventListener('click', ()=> doGachaPull(10));
+
   function renderStageCards(){
+    gachaEntryBalance.textContent = gameData.starDust;
     stageCardsEl.innerHTML = '';
     curGrade().stages.forEach((st, idx)=>{
       const qCount = parseQuestions(st.text).length;
@@ -2276,6 +2527,7 @@ water의 뜻은?|물|불|흙|바람`
       icon.className = 'tower-bar-icon';
       icon.src = c.icon;
       icon.style.objectPosition = c.imgPos || 'center 20%';
+      applySkinToIcon(icon);
       const name = document.createElement('span');
       name.className = 'tower-bar-name';
       name.textContent = c.name;
@@ -2618,6 +2870,7 @@ water의 뜻은?|물|불|흙|바람`
     icon.className = 'tower-icon';
     icon.src = char.icon;
     icon.style.objectPosition = char.imgPos || 'center 25%';
+    applySkinToIcon(icon);
     const levelBadge = document.createElement('span');
     levelBadge.className = 'tower-level-badge';
     levelBadge.textContent = 'Lv.1';
@@ -3302,11 +3555,13 @@ water의 뜻은?|물|불|흙|바람`
       run.maxHp = Math.min(MAX_HP_CAP, run.maxHp+1);
       run.hp = Math.min(run.maxHp, run.hp+1);
       if(run.totalGold > curGrade().bestRunScore) curGrade().bestRunScore = run.totalGold;
+      const starDustGained = awardStarDust(Math.max(5, Math.round(gained/6)));
       await saveGameDataNow();
 
       clearTitle.textContent = (curGrade().stages[id].title || (id+1)+'단원') + ' 클리어!';
       clearGained.textContent = gained + 'G';
       clearTotal.textContent = run.totalGold + 'G';
+      clearStarDust.textContent = starDustGained + '🌟';
 
       const unlockedChar = !wasCleared ? CHARACTERS.find(c => c.unlockStage === id) : null;
       if(unlockedChar){
@@ -3346,6 +3601,7 @@ water의 뜻은?|물|불|흙|바람`
         overSurvivalWrap.style.display = 'none';
         if(run.totalGold > curGrade().bestRunScore){ curGrade().bestRunScore = run.totalGold; isNew = true; }
       }
+      const starDustGained = awardStarDust(Math.max(2, Math.round(run.totalGold/12)));
       await saveGameDataNow();
 
       const st = curGrade().stages[run.currentStageId];
@@ -3355,6 +3611,7 @@ water의 뜻은?|물|불|흙|바람`
         : (STAGE_PHASE_PLAN[run.phaseIndex] ? (run.phaseIndex+1) + '/' + STAGE_PHASE_PLAN.length : '완료');
       overScore.textContent = run.totalGold + 'G';
       overCombo.textContent = run.maxCombo;
+      overStarDust.textContent = starDustGained + '🌟';
       overNewBest.style.display = isNew ? 'block' : 'none';
       sfxGameOver();
     }catch(err){
