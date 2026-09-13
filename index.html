@@ -2420,6 +2420,7 @@ water의 뜻은?|물|불|흙|바람`
     showView('gachaScreen');
   });
   gachaBackBtn.addEventListener('click', ()=>{
+    gachaEntryBalance.textContent = gameData.starDust;
     showView('stageSelectScreen');
   });
   gachaPull1Btn.addEventListener('click', ()=> doGachaPull(1));
