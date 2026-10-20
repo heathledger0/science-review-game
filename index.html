@@ -1878,9 +1878,20 @@ water의 뜻은?|물|불|흙|바람`
               if(typeof parsed.gachaPity !== 'number') parsed.gachaPity = 0;
               if(!Array.isArray(parsed.charGrades)) parsed.charGrades = CHARACTERS.map(()=>({ grade:'C', shards:0 }));
               else CHARACTERS.forEach((c,i)=>{ if(!parsed.charGrades[i]) parsed.charGrades[i] = { grade:'C', shards:0 }; });
-              // 새로 추가된 학년(예: 6학년 2학기)이 기존 저장 데이터에는 없을 수 있으므로 보충
+              // 새로 추가된 학년(예: 6학년 2학기)이나, 기존 학년에 새로 추가된 단원이
+              // 저장된 데이터에는 없을 수 있으므로 보충한다. (기존 진행 상황은 유지)
               Object.keys(GRADE_STAGE_TITLES).forEach(g => {
-                if(!parsed.grades[g]) parsed.grades[g] = makeGradeData(g);
+                if(!parsed.grades[g]){
+                  parsed.grades[g] = makeGradeData(g);
+                }else{
+                  const gd = parsed.grades[g];
+                  if(!Array.isArray(gd.stages)) gd.stages = [];
+                  if(!Array.isArray(gd.progress)) gd.progress = [];
+                  for(let i = gd.stages.length; i < GRADE_STAGE_TITLES[g].length; i++){
+                    gd.stages.push({ title: GRADE_STAGE_TITLES[g][i], text: GRADE_STAGE_TEXTS[g][i] });
+                    gd.progress.push({ cleared:false, best:0 });
+                  }
+                }
               });
               return parsed;
             }
