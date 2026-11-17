@@ -624,6 +624,7 @@ function answer(o,btn){
     const gain = S.combo>=3 ? Math.round(cfg.gauge*1.5) : cfg.gauge;
     S.gauge=Math.min(100,S.gauge+gain); S.gold+=cfg.reward;
     for(const m of S.monsters) if(m.k==='boss'){ S.fx.push({type:'beam',x:m.x,y:m.y,t:0.45,c:'#ffe066'}); S.fx.push({type:'boom',x:m.x,y:m.y,r:8,max:50,t:0.4,c:'#ffe066'}); hit(m,m.max*0.08); S.shake=Math.max(S.shake,7); floatText(m.x,m.y-m.r-22,'정답 일격!','#ffe066',16); }
+    S.fx.push({type:'ring',x:BASE[0]+4,y:BASE[1]-14,r:6,max:48,t:0.45,c:'#7dff9a'}); S.fx.push({type:'rays',x:BASE[0]+4,y:BASE[1]-14,t:0.5,max:0.5,c:'#b8ffcb'}); burst(BASE[0]+4,BASE[1]-24,10,['#7dff9a','#ffffff','#ffe066'],80,2.6);
     floatText(LW/2, LH-30, `정답! +${cfg.reward}G` + (S.combo>=3?`  🔥${S.combo}콤보`:''), '#7dff9a', 22);
     if(S.combo>=3) S.shake=Math.max(S.shake,4);
   } else {
@@ -677,7 +678,7 @@ $('ult').onclick=()=>{
   updateHUD();
 };
 // ② 히트스톱: 0.22초 정지 + 섬광 + 흔들림
-function impact(c){ S.freezeT=0.22; S.shake=14; S.fx.push({type:'flash',t:0.3,c}); }
+function impact(c){ S.freezeT=0.22; S.shake=14; buzz(70); S.fx.push({type:'flash',t:0.3,c}); }
 function sched(t,fn){ S.sched.push({t,fn}); }
 function playCutin(dur){
   const el=$('cutin'), h=S.hero;
@@ -748,12 +749,24 @@ function spawn(k){
   S.monsters.push({key, h, k, d:0, x:PATH[0][0], y:PATH[0][1], hp:M.hp*mult, max:M.hp*mult, speed:M.speed, r:M.r, color:M.color, dmg:M.dmg, boss:!!M.boss, label: k==='boss' ? BOSSN[UNIT.boss] : (k==='mini'&&UNIT.mini ? BOSSN[UNIT.mini.replace('boss_','')] : M.label), slowT:0, slowF:1, hitT:0});
   if(M.boss){ S.shake=8; showBanner(`⚠ ${M.label} 등장!`, 1400); }
 }
+function buzz(ms){ try{ if(navigator.vibrate) navigator.vibrate(ms); }catch(e){} }
+const DOMC={earth:['#d8a35a','#8a6a44'],matter:['#7fdcff','#c9f3ff'],energy:['#ffe066','#ffb23d'],life:['#ff6b6b','#9be27a']};
+// ① 처치 파편
+function burst(x,y,n,cols,spd,size){ for(let i=0;i<n;i++){ const a=Math.random()*Math.PI*2, v=spd*(0.4+Math.random()*0.8); S.fx.push({type:'spark',x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-spd*0.3,s:size*(0.6+Math.random()*0.7),c:cols[i%cols.length],t:0.45+Math.random()*0.3}); } }
 function hit(m,dmg,src){
   if(m.hp<=0) return;
+  // ③ 치명타: 타워 단일 공격의 10%가 1.5배
+  let crit=false; if(src==='tower1'){ src='tower'; if(Math.random()<0.1){ dmg*=1.5; crit=true; } }
   recordUlt(m,dmg,src);
-  m.hp-=dmg; m.hitT=0.12;
-  S.floats.push({x:m.x+(Math.random()*16-8), y:m.y-m.r-4, txt:Math.round(dmg), c: dmg>=80?'#ffd54a':'#fff', size: dmg>=80?20:13, t:0.8});
-  if(m.hp<=0){ S.gold+=1; S.fx.push({type:'boom',x:m.x,y:m.y,r:4,max:m.r*2.2,t:0.35,c:'#ddd'}); if(m.boss) S.shake=10; }
+  m.hp-=dmg; m.hitT=crit?0.2:0.12;
+  if(crit){ S.floats.push({x:m.x, y:m.y-m.r-6, txt:Math.round(dmg)+'!', c:'#ffd54a', size:22, t:0.9}); S.floats.push({x:m.x, y:m.y-m.r-26, txt:'치명타!', c:'#ff9a3d', size:12, t:0.9}); S.fx.push({type:'ring',x:m.x,y:m.y,r:4,max:m.r*1.6,t:0.25,c:'#ffd54a'}); }
+  else S.floats.push({x:m.x+(Math.random()*16-8), y:m.y-m.r-4, txt:Math.round(dmg), c: dmg>=80?'#ffd54a':'#fff', size: dmg>=80?20:13, t:0.8});
+  if(m.hp<=0){ S.gold+=1; const dc=DOMC[UNIT.dom]||DOMC[['earth','matter','energy','life'][(m.x|0)%4]];
+    S.fx.push({type:'boom',x:m.x,y:m.y,r:4,max:m.r*2.2,t:0.35,c:'#ddd'});
+    burst(m.x,m.y, m.boss?(m.k==='boss'?34:20):8, [dc[0],dc[1],'#ffffff'], m.boss?170:110, m.boss?5:3.2);
+    if(m.k==='boss'){ // ④ 최종보스 처치: 멈칫 + 흰 섬광
+      S.freezeT=Math.max(S.freezeT||0,0.35); S.shake=16; S.fx.push({type:'flash',t:0.45,c:'#ffffff'}); S.fx.push({type:'ring',x:m.x,y:m.y,r:10,max:140,t:0.6,c:'#ffe066'}); buzz([60,40,120]); }
+    else if(m.boss){ S.shake=10; S.freezeT=Math.max(S.freezeT||0,0.12); buzz(50); } }
 }
 function update(dt){
   S.t+=dt;
@@ -783,7 +796,7 @@ function update(dt){
     }
     if(m.d>=PATH_LEN && S.shieldT>0){ m.d=PATH_LEN-1; [m.x,m.y]=posAt(m.d); }
     if(m.d>=PATH_LEN){ m.hp=-999; m.escaped=true;
-      { S.lives-=m.dmg; S.shake=9; S.fx.push({type:'flash',t:0.25,c:'#ff4d4d'}); if(S.lives<=0){ S.lives=0; updateHUD(); return endGame(false);} }
+      { S.lives-=m.dmg; S.shake=9; buzz(80); S.fx.push({type:'flash',t:0.25,c:'#ff4d4d'}); if(S.lives<=0){ S.lives=0; updateHUD(); return endGame(false);} }
       updateHUD();
     }
   }
@@ -803,7 +816,7 @@ function update(dt){
     if(m.hp<=0 && !m.escaped){ b.dead=true; continue; }
     if(L<b.sp*dt+m.r){ b.dead=true; const T=TOWERS[b.k];
       if(T.splash){ for(const o of S.monsters) if(Math.hypot(o.x-m.x,o.y-m.y)<=T.splash) hit(o,T.dmg*b.m,'tower'); S.fx.push({type:'boom',x:m.x,y:m.y,r:6,max:T.splash,t:0.3,c:T.color}); }
-      else { hit(m,T.dmg*b.m,'tower'); if(T.slow){ m.slowT=T.slowDur+(b.m>1?0.6:0); m.slowF=T.slow; } }
+      else { hit(m,T.dmg*b.m,'tower1'); if(T.slow){ m.slowT=T.slowDur+(b.m>1?0.6:0); m.slowF=T.slow; } }
     } else { b.x+=dx/L*b.sp*dt; b.y+=dy/L*b.sp*dt; }
   }
   S.bullets=S.bullets.filter(b=>!b.dead);
@@ -873,6 +886,8 @@ function draw(dtReal){
     if(f.type==='clock'){ const p=1-f.t/f.max; ctx.globalAlpha=Math.min(0.6,a); ctx.strokeStyle='#d9ccff'; ctx.lineWidth=4; const R=60+p*80; ctx.beginPath(); ctx.arc(LW/2,LH/2,R,0,Math.PI*2); ctx.stroke(); for(let k=0;k<12;k++){ const b=k/12*Math.PI*2; ctx.beginPath(); ctx.moveTo(LW/2+Math.cos(b)*(R-10),LH/2+Math.sin(b)*(R-10)); ctx.lineTo(LW/2+Math.cos(b)*R,LH/2+Math.sin(b)*R); ctx.stroke(); } ctx.beginPath(); ctx.moveTo(LW/2,LH/2); ctx.lineTo(LW/2+Math.cos(p*12-1.57)*R*0.8,LH/2+Math.sin(p*12-1.57)*R*0.8); ctx.stroke(); ctx.globalAlpha=1; }
     if(f.type==='domeIn'){ ctx.strokeStyle='#ffe27a'; ctx.globalAlpha=Math.min(1,a*3); ctx.lineWidth=5; ctx.beginPath(); ctx.arc(BASE[0],BASE[1]-8,46+(1-a/0.4)*40,0,Math.PI*2); ctx.stroke(); ctx.globalAlpha=1; }
     if(f.type==='sprout'){ for(let d=TRAP_RANGE[0]; d<TRAP_RANGE[1]; d+=40){ const [x,y]=posAt(d); ctx.strokeStyle='#7ee081'; ctx.globalAlpha=Math.min(1,a*3); ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(x,y+14); ctx.quadraticCurveTo(x-10,y-10,x+4,y-24*(1-a/0.5)-6); ctx.stroke(); ctx.globalAlpha=1; } }
+    if(f.type==='spark'){ f.x+=f.vx*dtReal; f.y+=f.vy*dtReal; f.vy+=260*dtReal; f.vx*=0.98; ctx.globalAlpha=Math.min(1,a*3); ctx.fillStyle=f.c; ctx.fillRect(f.x-f.s/2,f.y-f.s/2,f.s,f.s); ctx.globalAlpha=1; }
+    if(f.type==='rays'){ const p=1-a/f.max; ctx.save(); ctx.translate(f.x,f.y); ctx.rotate(p*0.6); ctx.globalAlpha=Math.min(1,a*2.5)*0.8; ctx.fillStyle=f.c; for(let i=0;i<8;i++){ ctx.rotate(Math.PI/4); ctx.fillRect(-2,-(14+46*p),4,26); } ctx.restore(); ctx.globalAlpha=1; }
     if(f.type==='flash'){ ctx.fillStyle=f.c; ctx.globalAlpha=Math.min(0.45,a*1.5); ctx.fillRect(0,0,LW,LH); ctx.globalAlpha=1; }
   }
   S.fx=S.fx.filter(f=>f.t>0);
