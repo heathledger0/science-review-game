@@ -12,6 +12,7 @@
   #app{position:fixed; inset:0; display:flex; flex-direction:column;}
   .hud{height:34px; display:flex; align-items:center; gap:14px; padding:0 10px; background:#2a2a31; font-size:14px; flex-shrink:0;}
   .hud b{color:#fff;} .hud .sp{flex:1}
+  .pinrow button.off{background:#3a365a; color:#aaa;}
   .hud button{background:#3a3a44; color:#ddd; border:0; border-radius:6px; padding:4px 9px; font-size:13px;}
   .mapwrap{flex:1; position:relative; min-height:0;}
   canvas{position:absolute; inset:0; width:100%; height:100%; touch-action:none;}
@@ -164,6 +165,7 @@
     <span>웨이브 <b id="wave">0</b>/<span id="waveMax">8</span></span>
     <span>콤보 <b id="combo">0</b></span>
     <span class="sp"></span>
+    <button id="sndFx" title="효과음">🔊</button><button id="sndBgm" title="음악">🎵</button>
   </div>
   <div class="mapwrap" id="mapwrap">
     <canvas id="cv"></canvas>
@@ -461,7 +463,7 @@ if(SAVE.best && Object.keys(SAVE.best).length){ for(const k in SAVE.best){ const
   SAVE.best={}; save(); saveData(); }
 const totalStars=()=>UNITS.reduce((a,u)=>a+((rec(u)||{}).stars||0),0);
 const starStr=n=>'★'.repeat(n)+'<i>'+'★'.repeat(3-n)+'</i>';
-function show(id){ document.querySelectorAll('.scr').forEach(e=>e.hidden = e.id!==id); }
+function show(id){ document.querySelectorAll('.scr').forEach(e=>e.hidden = e.id!==id); if(id) try{ SND.bgm('lobby'); }catch(e){} }
 
 // 첫 영웅 고르기(처음 한 번)
 function ensureHero(next){ if(DATA.v2.heroes.length) return next(); show('scrPick');
@@ -496,9 +498,11 @@ function openLobby(tab){ curTab=tab||curTab; show('scrLobby'); $('lbStars').inne
     M.innerHTML=`<div class="panel"><b>과학 카드 도감</b> <span style="color:#ffd54a;font-size:13px">${have}/${CARDS.length}</span><p>카드를 누르면 과학 개념을 볼 수 있어요.</p><div class="dex">${CARDS.map(c=>{ const n=DATA.v2.cards[c.id]; return `<div class="${n?'r-'+c.r:'lock'}" data-id="${c.id}"><img src="${ASSETS[c.id]}" alt="">${n?c.n:'???'}${n>1?` <i>×${n}</i>`:''}</div>`; }).join('')}</div><div class="cdetail" id="cdetail">카드를 눌러 보세요</div></div>`;
     M.querySelectorAll('.dex > div').forEach(e=>e.onclick=()=>{ const c=CARDS.find(x=>x.id===e.dataset.id); $('cdetail').innerHTML= DATA.v2.cards[c.id] ? `<b>${c.n}</b> <small>${c.u}</small><br>${c.t}` : '아직 모으지 못한 카드예요. 뽑기에서 나와요.'; $('cdetail').scrollIntoView({block:'nearest',behavior:'smooth'}); }); }
   const CREDIT='<div class="panel" style="margin-top:8px"><b>제작 정보</b><p>만든 사람: <b style="display:inline;color:#ffd54a">충주또박이</b></p><p>글꼴: Galmuri11 © 2019–2025 Lee Minseo · <a href="assets/v2/font/ofl-ko.md" target="_blank" style="color:#53d8fb">SIL Open Font License 1.1</a></p></div>';
-  if(curTab==='set'){ M.innerHTML=(teacherOK
+  const SOUND=`<div class="panel" style="margin-bottom:8px"><b>소리</b><div class="pinrow" style="gap:8px"><button id="stFx" class="${SND.A.sfx?'':'off'}">효과음 ${SND.A.sfx?'켜짐':'꺼짐'}</button><button id="stBgm" class="${SND.A.bgm?'':'off'}">배경음악 ${SND.A.bgm?'켜짐':'꺼짐'}</button></div><p>배경음악은 켤 때 한 번 내려받아요(약 3.5MB).</p></div>`;
+  if(curTab==='set'){ M.innerHTML=SOUND+(teacherOK
       ? '<div class="panel"><b>선생님 메뉴</b><p>문제 편집, 우리 반 전용 링크, PIN 변경</p><div class="pinrow"><button id="tcOpen">열기</button></div></div>'
       : '<div class="panel"><b>선생님 메뉴</b><p>문제 편집과 관리 기능은 PIN을 입력해야 열려요.</p><div class="pinrow"><input id="pinIn" type="password" inputmode="numeric" maxlength="4" placeholder="PIN 4자리" style="width:120px"><button id="pinGo">열기</button><span id="pinMsg" style="color:#ff8a8a;font-size:13px"></span></div></div>')+CREDIT;
+    $('stFx').onclick=()=>{ SND.set('sfx',!SND.A.sfx); sndUI(); openLobby('set'); }; $('stBgm').onclick=()=>{ SND.set('bgm',!SND.A.bgm); sndUI(); openLobby('set'); };
     if(teacherOK) $('tcOpen').onclick=()=>openTeacher();
     else { const go=()=>{ if($('pinIn').value===DATA.adminPin){ teacherOK=true; openTeacher(); } else $('pinMsg').textContent='PIN이 틀렸어요'; }; $('pinGo').onclick=go; $('pinIn').onkeydown=e=>{ if(e.key==='Enter') go(); }; } }
 }
@@ -527,7 +531,7 @@ $('npSave').onclick=()=>{ const a=$('np1').value, b=$('np2').value; if(!/^\d{4}$
   DATA.adminPin=a; $('npMsg').textContent= saveData()? 'PIN을 바꿨어요' : '이 브라우저에서는 저장되지 않아요'; $('np1').value=$('np2').value=''; };
 $('tcBack').onclick=()=>openLobby('set'); $('tcLock').onclick=()=>{ teacherOK=false; openLobby('set'); };
 
-function doPull(n){ const cost=n===10?140:15; if(DATA.starDust<cost) return; DATA.starDust-=cost; const res=[]; for(let k=0;k<n;k++) res.push(pullOnce()); saveData(); showResults(res); }
+function doPull(n){ const cost=n===10?140:15; if(DATA.starDust<cost) return; DATA.starDust-=cost; const res=[]; for(let k=0;k<n;k++) res.push(pullOnce()); saveData(); SND.sfx('gacha_pull'); if(res.some(x=>x.rar==='l'||(x.hero!=null&&x.isNew))) SND.sfx('gacha_rare'); showResults(res); }
 function showResults(res, head){ const G=$('gres'); G.hidden=false; const RL={c:'일반',r:'희귀',l:'전설'};
   const newHero=res.find(x=>x.hero!=null && x.isNew);
   G.innerHTML=`<div class="gin"><h2>${head||(newHero?'새 영웅 등장!':'뽑기 결과')}</h2>
@@ -569,7 +573,7 @@ function startBattle(){ const hero=S.hero; for(const k in S) delete S[k]; Object
   const D=DIFFS.find(d=>d.id===SAVE.diff)||DIFFS[1]; S.endless = D.id==='endless'; S.diffId=D.id;
   $('tDiff').value=String(D.m); $('waveMax').textContent=S.endless?'∞':'8';
   $('endOv').style.display='none'; show(null); bmSlot=-1; $('buildmenu').style.display='none';
-  startGame(); }
+  SND.bgm('battle'); startGame(); }
 // 바로가기: 주소 끝 #unit-번호
 (async()=>{
   try{ const P=new URLSearchParams(location.search); const g=P.get('grade'), si=parseInt(P.get('stage'),10), cd=P.get('classdata');
@@ -578,6 +582,57 @@ function startBattle(){ const hero=S.hero; for(const k in S) delete S[k]; Object
       openPrep(k,true); return; } }catch(e){ console.error('class link import error', e); }
   const m=/^#unit-(\d+)$/.exec(location.hash||''); if(m && UNITS[+m[1]-1]) openPrep(+m[1]-1, true);
 })();
+// ---------- 소리: 효과음(즉석 합성, 나중에 파일로 교체 가능) · 배경음악(파일) ----------
+const SND=(()=>{
+  if(!DATA.v2.audio) DATA.v2.audio={sfx:true,bgm:false};
+  const A=DATA.v2.audio; let ctx=null, sfxBus=null, bgmBus=null; const last={};
+  function ac(){ if(!ctx){ try{ ctx=new (window.AudioContext||window.webkitAudioContext)(); sfxBus=ctx.createGain(); sfxBus.gain.value=0.55; sfxBus.connect(ctx.destination); bgmBus=ctx.createGain(); bgmBus.gain.value=0.42; bgmBus.connect(ctx.destination); }catch(e){ return null; } }
+    if(ctx.state==='suspended') ctx.resume(); return ctx; }
+  function tone(f,d,type,vol,delay,f2){ const c=ac(); if(!c) return; const t=c.currentTime+(delay||0); const o=c.createOscillator(), g=c.createGain();
+    o.type=type||'square'; o.frequency.setValueAtTime(f,t); if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+d);
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol||0.15,t+0.006); g.gain.exponentialRampToValueAtTime(0.001,t+d);
+    o.connect(g); g.connect(sfxBus); o.start(t); o.stop(t+d+0.03); }
+  function noise(d,vol,delay,lp){ const c=ac(); if(!c) return; const t=c.currentTime+(delay||0); const n=Math.max(1,c.sampleRate*d|0); const b=c.createBuffer(1,n,c.sampleRate); const x=b.getChannelData(0);
+    for(let i=0;i<n;i++) x[i]=(Math.random()*2-1)*(1-i/n); const s=c.createBufferSource(); s.buffer=b; const g=c.createGain(); g.gain.value=vol||0.2;
+    const f=c.createBiquadFilter(); f.type='lowpass'; f.frequency.value=lp||4000; s.connect(f); f.connect(g); g.connect(sfxBus); s.start(t); }
+  const FX={
+    hit:()=>tone(880,0.05,'square',0.035,0,520),
+    crit:()=>{ tone(1200,0.08,'square',0.07,0,500); noise(0.06,0.08,0,6000); },
+    kill:()=>{ tone(500,0.09,'square',0.06,0,1100); noise(0.08,0.06,0,3000); },
+    boss_kill:()=>{ noise(0.9,0.28,0,1800); tone(160,0.7,'sawtooth',0.14,0,40); [523,659,784,1047].forEach((f,i)=>tone(f,0.22,'square',0.07,0.35+i*0.09)); },
+    boss_appear:()=>{ [0,0.32,0.64].forEach(d=>{ tone(220,0.26,'sawtooth',0.12,d,180); tone(110,0.26,'square',0.08,d); }); noise(0.9,0.08,0,400); },
+    mini_appear:()=>{ tone(260,0.22,'sawtooth',0.09,0,200); tone(260,0.22,'sawtooth',0.09,0.28,200); },
+    correct:()=>{ tone(988,0.08,'square',0.09); tone(1319,0.16,'square',0.09,0.08); },
+    wrong:()=>{ tone(196,0.12,'square',0.08); tone(147,0.22,'square',0.08,0.11); },
+    build:()=>{ noise(0.06,0.12,0,900); tone(392,0.08,'square',0.08,0.02); tone(587,0.1,'square',0.07,0.08); },
+    upgrade:()=>[523,659,784,1047].forEach((f,i)=>tone(f,0.1,'square',0.07,i*0.06)),
+    ult:()=>{ tone(200,0.5,'sawtooth',0.1,0,1600); noise(0.5,0.1,0,2500); tone(1047,0.25,'square',0.08,0.45); },
+    breach:()=>{ noise(0.25,0.22,0,700); tone(110,0.3,'square',0.12,0,60); },
+    gacha_pull:()=>{ for(let i=0;i<8;i++) tone(400+i*90,0.07,'triangle',0.07,i*0.07); },
+    gacha_rare:()=>{ [784,988,1175,1568].forEach((f,i)=>tone(f,0.25,'square',0.07,0.6+i*0.1)); noise(0.5,0.05,0.6,9000); },
+    button:()=>tone(1500,0.03,'square',0.03),
+    clear:()=>[523,659,784,1047,784,1047].forEach((f,i)=>tone(f,i===5?0.5:0.14,'square',0.09,[0,0.12,0.24,0.36,0.6,0.72][i])),
+    gameover:()=>[392,349,311,262].forEach((f,i)=>tone(f,0.3,'triangle',0.11,i*0.22))
+  };
+  const GAP={hit:0.07,kill:0.05,crit:0.06,button:0.05};
+  function sfx(n){ if(!A.sfx) return; const c=ac(); if(!c) return; const now=c.currentTime; if(GAP[n] && last[n] && now-last[n]<GAP[n]) return; last[n]=now; try{ FX[n]&&FX[n](); }catch(e){} }
+  // 배경음악: 같은 사이트의 mp3를 흘려 읽음(켰을 때만 내려받음)
+  const BGM={lobby:'assets/v2/bgm/lobby.mp3',battle:'assets/v2/bgm/battle.mp3',boss:'assets/v2/bgm/boss.mp3'};
+  const els={}; let cur=null, want=null;
+  function el(k){ if(els[k]) return els[k]; const a=new Audio(BGM[k]); a.loop=true; a.preload='auto'; const c=ac(); let g=null;
+    try{ const src=c.createMediaElementSource(a); g=c.createGain(); g.gain.value=0; src.connect(g); g.connect(bgmBus); }catch(e){}
+    return els[k]={a,g}; }
+  function fade(k,to,sec){ const e=els[k]; if(!e) return; if(e.g){ const t=ctx.currentTime; e.g.gain.cancelScheduledValues(t); e.g.gain.setValueAtTime(e.g.gain.value,t); e.g.gain.linearRampToValueAtTime(to,t+sec); } else e.a.volume=to; if(to===0) setTimeout(()=>{ if(cur!==k) e.a.pause(); },sec*1000+50); }
+  function bgm(k){ want=k; if(!A.bgm || !ac()) { if(cur){ fade(cur,0,0.4); cur=null; } return; } if(cur===k) return;
+    if(cur) fade(cur,0,0.8); cur=k; if(!k) return; const e=el(k); if(k!=='lobby') e.a.currentTime=0; const p=e.a.play(); if(p&&p.catch) p.catch(()=>{}); fade(k,1,0.8); }
+  function set(kind,on){ A[kind]=on; saveData(); if(kind==='bgm'){ if(on){ const w=want||'lobby'; cur=null; bgm(w); } else { const w=want; bgm(null); want=w; } } }
+  // 첫 터치에서 소리 장치 깨우기(아이패드는 터치 후에만 소리가 남)
+  const unlock=()=>{ ac(); if(A.bgm && want && !cur) bgm(want); };
+  document.addEventListener('pointerdown',unlock,{capture:true});
+  document.addEventListener('pointerdown',e=>{ const b=e.target.closest&&e.target.closest('button'); if(b && !b.closest('#choices') && b.id!=='ult') sfx('button'); },{capture:true});
+  return {sfx,bgm,set,A,state:()=>({cur,want,ctx:ctx&&ctx.state,els:Object.fromEntries(Object.entries(els).map(([k,e])=>[k,{paused:e.a.paused,t:+e.a.currentTime.toFixed(1),g:e.g?+e.g.gain.value.toFixed(2):null,err:e.a.error&&e.a.error.code}]))})};
+})();
+
 // 게임 조절(선생님 메뉴): 이 기기에 저장
 const TUNE_IDS=['tSlow','tGauge','tBreak','tLimit','tReward','tUp','tAuto'];
 const TUNE_DEF={}; TUNE_IDS.forEach(id=>TUNE_DEF[id]=$(id).value);
@@ -585,6 +640,8 @@ if(DATA.v2.tune) TUNE_IDS.forEach(id=>{ const v=DATA.v2.tune[id]; if(v!=null && 
 TUNE_IDS.forEach(id=>$(id).onchange=()=>{ DATA.v2.tune=Object.fromEntries(TUNE_IDS.map(k=>[k,$(k).value])); saveData(); readCfg(); });
 $('tuneReset').onclick=()=>{ TUNE_IDS.forEach(id=>$(id).value=TUNE_DEF[id]); delete DATA.v2.tune; saveData(); readCfg(); };
 $('tDiff').onchange=readCfg;
+function sndUI(){ $('sndFx').textContent=SND.A.sfx?'🔊':'🔇'; $('sndFx').style.opacity=SND.A.sfx?1:.5; $('sndBgm').style.opacity=SND.A.bgm?1:.4; }
+$('sndFx').onclick=e=>{ e.stopPropagation(); SND.set('sfx',!SND.A.sfx); sndUI(); }; $('sndBgm').onclick=e=>{ e.stopPropagation(); SND.set('bgm',!SND.A.bgm); sndUI(); }; sndUI();
 function readCfg(){ cfg.slow=+$('tSlow').value; cfg.gauge=+$('tGauge').value; cfg.brk=+$('tBreak').value; cfg.limit=+$('tLimit').value; cfg.reward=+$('tReward').value; cfg.up=$('tUp').value; cfg.diff=+$('tDiff').value; cfg.auto=$('tAuto').value==='1'; updateHUD(); }
 
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
@@ -620,7 +677,7 @@ function answer(o,btn){
   const ok = o===S.q.c; S.answered++; S.recent.push(ok?1:0); if(S.recent.length>8) S.recent.shift();
   document.querySelectorAll('#choices button').forEach(b=>{ b.disabled=true; if(b.textContent===S.q.c) b.classList.add('correct'); });
   if(ok){
-    S.correct++; S.combo++; S.maxCombo=Math.max(S.maxCombo,S.combo);
+    SND.sfx('correct'); S.correct++; S.combo++; S.maxCombo=Math.max(S.maxCombo,S.combo);
     const gain = S.combo>=3 ? Math.round(cfg.gauge*1.5) : cfg.gauge;
     S.gauge=Math.min(100,S.gauge+gain); S.gold+=cfg.reward;
     for(const m of S.monsters) if(m.k==='boss'){ S.fx.push({type:'beam',x:m.x,y:m.y,t:0.45,c:'#ffe066'}); S.fx.push({type:'boom',x:m.x,y:m.y,r:8,max:50,t:0.4,c:'#ffe066'}); hit(m,m.max*0.08); S.shake=Math.max(S.shake,7); floatText(m.x,m.y-m.r-22,'정답 일격!','#ffe066',16); }
@@ -628,7 +685,7 @@ function answer(o,btn){
     floatText(LW/2, LH-30, `정답! +${cfg.reward}G` + (S.combo>=3?`  🔥${S.combo}콤보`:''), '#7dff9a', 22);
     if(S.combo>=3) S.shake=Math.max(S.shake,4);
   } else {
-    btn && btn.classList.add('wrong');
+    SND.sfx('wrong'); btn && btn.classList.add('wrong');
     S.combo=0; S.retry.push(S.q);
     floatText(LW/2, LH-30, '아쉬워요! 정답을 확인하세요', '#ff8a8a', 18);
   }
@@ -649,7 +706,7 @@ function updateQuiz(dtReal){
 // ---------- 필살기 ----------
 $('ult').onclick=()=>{
   if(S.gauge<100 || !S.running || S.cutT>0 || S.sched.length) return;
-  S.gauge=0; S.ultUses=(S.ultUses||0)+1; $('bubble').classList.remove('show');
+  S.gauge=0; S.ultUses=(S.ultUses||0)+1; SND.sfx('ult'); $('bubble').classList.remove('show');
   const h=S.hero.id, P=heroPow();
   // ① 컷인: 첫 사용 0.9초, 이후 0.5초 동안 전투 정지
   const dur = S.ultUses===1 ? 0.9 : 0.5;
@@ -701,7 +758,7 @@ function checkUltEnd(){
 }
 $('hup').onclick=()=>{
   if(S.hlv>=5 || !S.running || !canUp('hero')) return; const c=HERO_UP[S.hlv]; if(S.gold<c) return;
-  S.gold-=c; S.hlv++; S.shake=5; floatText(LW-120, LH-30, `${S.hero.name} 강화! Lv${S.hlv} (필살기 +${S.hlv*25}%)`, '#ffd54a', 16); updateHUD();
+  S.gold-=c; S.hlv++; S.shake=5; SND.sfx('upgrade'); floatText(LW-120, LH-30, `${S.hero.name} 강화! Lv${S.hlv} (필살기 +${S.hlv*25}%)`, '#ffd54a', 16); updateHUD();
 };
 // ---------- 타워 건설 ----------
 const bm=$('buildmenu'); let bmSlot=-1;
@@ -721,18 +778,18 @@ cv.addEventListener('pointerdown',e=>{
   const [sx,sy]=SLOTS[idx]; const px=offX+sx*scale, py=offY+sy*scale;
   const w=220; bm.style.left=Math.max(4,Math.min(r.width-w-4,px-w/2))+'px'; bm.style.top=(py>r.height/2? py-64 : py+22)+'px';
 });
-function upTower(tw,c){ if(S.gold<c||tw.lv||!canUp('tower')) return; S.gold-=c; tw.lv=1; hideBM(); updateHUD(); S.fx.push({type:'ring',x:tw.x,y:tw.y,r:10,max:46,t:0.5,c:'#ffd54a'}); floatText(tw.x,tw.y-24,'강화!','#ffd54a',15); }
+function upTower(tw,c){ if(S.gold<c||tw.lv||!canUp('tower')) return; S.gold-=c; tw.lv=1; SND.sfx('upgrade'); hideBM(); updateHUD(); S.fx.push({type:'ring',x:tw.x,y:tw.y,r:10,max:46,t:0.5,c:'#ffd54a'}); floatText(tw.x,tw.y-24,'강화!','#ffd54a',15); }
 function hideBM(){ bm.style.display='none'; bmSlot=-1; }
 function build(k){
   const T=TOWERS[k]; if(S.gold<T.cost||bmSlot<0) return;
   S.gold-=T.cost; const [x,y]=SLOTS[bmSlot];
-  S.towers.push({slot:bmSlot,k,x,y,cd:0}); hideBM(); updateHUD();
+  S.towers.push({slot:bmSlot,k,x,y,cd:0}); hideBM(); updateHUD(); SND.sfx('build');
   S.fx.push({type:'ring',x,y,r:10,max:40,t:0.4,c:T.color});
 }
 
 // ---------- 전투 ----------
 function startWave(){
-  const W=WAVES[S.wave % WAVES.length]; S.wave++; S.waveActive=true; (S.wt=S.wt||[]).push(Math.round(S.rt||0));
+  const W=WAVES[S.wave % WAVES.length]; S.wave++; S.waveActive=true; if(!W.list.some(([k])=>k==='boss')) SND.bgm('battle'); (S.wt=S.wt||[]).push(Math.round(S.rt||0));
   const q=[]; W.list.forEach(([k,n])=>{ for(let i=0;i<n;i++) q.push(k); });
   // 보스는 마지막, 나머지는 섞기
   const bosses=q.filter(k=>MTYPES[k].boss), rest=shuffle(q.filter(k=>!MTYPES[k].boss));
@@ -747,7 +804,7 @@ function spawn(k){
   else if(k==='mini'){ key=UNIT.mini||('mini_'+(DOM_MINI[UNIT.dom]||['turtle','flask','robot','mushroom'][Math.random()*4|0])); h=62; }
   else { const pool = UNIT.dom==='mix' ? ALL_MOBS : DOM_MOBS[UNIT.dom]; const nm = UNIT.dom==='mix' ? pool[Math.random()*pool.length|0] : pool[k==='fast'?1:0]; key='mob_'+nm; h = k==='tank'?46 : k==='fast'?30 : 35; }
   S.monsters.push({key, h, k, d:0, x:PATH[0][0], y:PATH[0][1], hp:M.hp*mult, max:M.hp*mult, speed:M.speed, r:M.r, color:M.color, dmg:M.dmg, boss:!!M.boss, label: k==='boss' ? BOSSN[UNIT.boss] : (k==='mini'&&UNIT.mini ? BOSSN[UNIT.mini.replace('boss_','')] : M.label), slowT:0, slowF:1, hitT:0});
-  if(M.boss){ S.shake=8; showBanner(`⚠ ${M.label} 등장!`, 1400); }
+  if(M.boss){ S.shake=8; showBanner(`⚠ ${M.label} 등장!`, 1400); if(k==='boss'){ SND.sfx('boss_appear'); SND.bgm('boss'); } else SND.sfx('mini_appear'); }
 }
 function buzz(ms){ try{ if(navigator.vibrate) navigator.vibrate(ms); }catch(e){} }
 const DOMC={earth:['#d8a35a','#8a6a44'],matter:['#7fdcff','#c9f3ff'],energy:['#ffe066','#ffb23d'],life:['#ff6b6b','#9be27a']};
@@ -759,9 +816,10 @@ function hit(m,dmg,src){
   let crit=false; if(src==='tower1'){ src='tower'; if(Math.random()<0.1){ dmg*=1.5; crit=true; } }
   recordUlt(m,dmg,src);
   m.hp-=dmg; m.hitT=crit?0.2:0.12;
+  SND.sfx(crit?'crit':'hit');
   if(crit){ S.floats.push({x:m.x, y:m.y-m.r-6, txt:Math.round(dmg)+'!', c:'#ffd54a', size:22, t:0.9}); S.floats.push({x:m.x, y:m.y-m.r-26, txt:'치명타!', c:'#ff9a3d', size:12, t:0.9}); S.fx.push({type:'ring',x:m.x,y:m.y,r:4,max:m.r*1.6,t:0.25,c:'#ffd54a'}); }
   else S.floats.push({x:m.x+(Math.random()*16-8), y:m.y-m.r-4, txt:Math.round(dmg), c: dmg>=80?'#ffd54a':'#fff', size: dmg>=80?20:13, t:0.8});
-  if(m.hp<=0){ S.gold+=1; const dc=DOMC[UNIT.dom]||DOMC[['earth','matter','energy','life'][(m.x|0)%4]];
+  if(m.hp<=0){ SND.sfx(m.k==='boss'?'boss_kill':'kill'); S.gold+=1; const dc=DOMC[UNIT.dom]||DOMC[['earth','matter','energy','life'][(m.x|0)%4]];
     S.fx.push({type:'boom',x:m.x,y:m.y,r:4,max:m.r*2.2,t:0.35,c:'#ddd'});
     burst(m.x,m.y, m.boss?(m.k==='boss'?34:20):8, [dc[0],dc[1],'#ffffff'], m.boss?170:110, m.boss?5:3.2);
     if(m.k==='boss'){ // ④ 최종보스 처치: 멈칫 + 흰 섬광
@@ -796,7 +854,7 @@ function update(dt){
     }
     if(m.d>=PATH_LEN && S.shieldT>0){ m.d=PATH_LEN-1; [m.x,m.y]=posAt(m.d); }
     if(m.d>=PATH_LEN){ m.hp=-999; m.escaped=true;
-      { S.lives-=m.dmg; S.shake=9; buzz(80); S.fx.push({type:'flash',t:0.25,c:'#ff4d4d'}); if(S.lives<=0){ S.lives=0; updateHUD(); return endGame(false);} }
+      { S.lives-=m.dmg; S.shake=9; buzz(80); SND.sfx('breach'); S.fx.push({type:'flash',t:0.25,c:'#ff4d4d'}); if(S.lives<=0){ S.lives=0; updateHUD(); return endGame(false);} }
       updateHUD();
     }
   }
@@ -913,7 +971,7 @@ function updateHUD(){
 let bannerTO; function showBanner(t,ms){ const b=$('banner'); b.textContent=t; b.classList.add('show'); clearTimeout(bannerTO); bannerTO=setTimeout(()=>b.classList.remove('show'),ms); }
 
 function endGame(win){
-  S.running=false; S.over=true;
+  S.running=false; S.over=true; SND.bgm(null); SND.sfx(win||S.endless?'clear':'gameover');
   const acc = S.answered? Math.round(S.correct/S.answered*100):0;
   const stars = !win?0: acc>=90?3: acc>=70?2:1;
   const r=rec(UNIT); const old={stars:r.stars||0, wave:r.wave||0};
@@ -954,7 +1012,7 @@ function loop(now){
 }
 resize();
 // 자동 시험(브라우저 자동화)에서만 열리는 접근 통로
-if(navigator.webdriver){ window.__S=S; window.__end=endGame; window.__cfg=cfg; }
+if(navigator.webdriver){ window.__SND=SND; window.__S=S; window.__end=endGame; window.__cfg=cfg; }
 })();
 </script>
 </body>
