@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="assets/v2/qrcode.js"></script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>지식의 탑</title>
@@ -231,7 +231,7 @@
         <p>왼쪽에서 고른 단원의 문제를 담은 링크와 QR코드를 만들어요. 학생이 들어오면 이 문제로 바로 출전 준비 화면이 열려요.</p>
         <div class="pinrow"><button id="lkGen">링크·QR 만들기</button><button id="lkCopy" style="background:#3a365a;color:#fff">링크 복사</button></div>
         <input id="lkOut" type="text" readonly placeholder="버튼을 누르면 링크가 나와요" style="width:100%;margin-top:6px;background:#2a2748;color:#fff;border:2px solid #4a4670;border-radius:8px;padding:7px 9px;font-size:13px">
-        <div id="lkQr" style="display:none;background:#fff;padding:8px;border-radius:10px;width:max-content;margin:8px auto 0"></div>
+        <div id="lkQr" style="display:none;text-align:center;margin-top:8px"><canvas id="lkCv" style="background:#fff;border-radius:10px;width:220px;height:220px;image-rendering:pixelated"></canvas><div class="pinrow" style="justify-content:center"><button id="lkBig">QR 크게 보기</button></div></div>
         <p id="lkMsg" style="color:#ffd54a"></p>
       </div>
       <div class="panel" style="margin-top:8px">
@@ -522,9 +522,21 @@ $('edReset').onclick=()=>{ const u=UNITS[edIdx]; if(!resetArmed){ resetArmed=tru
   DATA.grades[u.gk].stages[u.si]={title:defTitle(u), text:u.q}; saveData(); loadEd(); $('edSaved').textContent='기본 문제로 되돌렸어요'; };
 $('edTry').onclick=()=>openPrep(edIdx,true);
 $('lkGen').onclick=async()=>{ const u=UNITS[edIdx]; if(!uq(u).length){ $('lkMsg').textContent='문제가 없어서 링크를 만들 수 없어요'; return; }
-  const url=await makeClassLink(u); $('lkOut').value=url; const box=$('lkQr'); box.innerHTML=''; box.style.display='none'; let msg=`링크 길이 ${url.length}자`;
-  if(typeof QRCode==='function'){ try{ new QRCode(box,{text:url,width:168,height:168,correctLevel:QRCode.CorrectLevel.M}); box.style.display='block'; }catch(e){ box.style.display='none'; msg+=' · 문제가 많아 QR코드는 만들 수 없어요. 링크를 써 주세요'; } }
-  else msg+=' · QR 도구를 불러오지 못했어요'; $('lkMsg').textContent=msg; };
+  const url=await makeClassLink(u); $('lkOut').value=url; const box=$('lkQr'); box.style.display='none'; let msg=`링크 길이 ${url.length}자`;
+  const q=drawQR($('lkCv'),url,8); if(q){ box.style.display='block'; lastQR=url; if(q>=60) msg+=' · 문제가 많아 QR이 촘촘해요. 안 찍히면 "QR 크게 보기"로 화면 가득 띄워 주세요'; }
+  else msg+=' · 문제가 너무 많아 QR코드는 만들 수 없어요. 링크를 써 주세요'; $('lkMsg').textContent=msg; };
+// QR: 이 게임 안에 들어 있는 도구(qrcode-generator, MIT)로 만들고, 칸 하나를 정수 픽셀로 그려 선명하게
+let lastQR='';
+function drawQR(cv,text,cell){ if(typeof qrcode!=='function') return 0; let q;
+  try{ q=qrcode(0,'L'); q.addData(text,'Byte'); q.make(); }catch(e){ return 0; }
+  const n=q.getModuleCount(), quiet=4, size=(n+quiet*2)*cell; cv.width=size; cv.height=size; const c=cv.getContext('2d');
+  c.fillStyle='#fff'; c.fillRect(0,0,size,size); c.fillStyle='#000';
+  for(let r=0;r<n;r++) for(let k=0;k<n;k++) if(q.isDark(r,k)) c.fillRect((k+quiet)*cell,(r+quiet)*cell,cell,cell);
+  return n; }
+$('lkBig').onclick=()=>{ if(!lastQR) return; const o=document.createElement('div'); o.style.cssText='position:fixed;inset:0;background:#fff;z-index:99;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px';
+  const cv=document.createElement('canvas'); drawQR(cv,lastQR,10); const m=Math.min(innerWidth,innerHeight-40)*0.94; cv.style.cssText=`width:${m}px;height:${m}px;image-rendering:pixelated`;
+  const t=document.createElement('div'); t.textContent='화면을 누르면 닫혀요'; t.style.cssText='color:#555;font-size:14px';
+  o.append(cv,t); o.onclick=()=>o.remove(); document.body.append(o); };
 $('lkCopy').onclick=async()=>{ const o=$('lkOut'); if(!o.value){ $('lkMsg').textContent='먼저 링크를 만들어 주세요'; return; }
   try{ await navigator.clipboard.writeText(o.value); $('lkMsg').textContent='링크를 복사했어요'; }catch(e){ o.focus(); o.select(); $('lkMsg').textContent='자동 복사가 막혀 있어요. 선택된 링크를 직접 복사해 주세요'; } };
 $('npSave').onclick=()=>{ const a=$('np1').value, b=$('np2').value; if(!/^\d{4}$/.test(a)){ $('npMsg').textContent='PIN은 숫자 4자리로 입력해 주세요'; return; } if(a!==b){ $('npMsg').textContent='두 PIN이 서로 달라요'; return; }
