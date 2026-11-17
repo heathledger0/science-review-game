@@ -45,6 +45,7 @@
   .tlogo h1{margin:0; font-size:min(17vh,66px); color:#ffd54a; text-shadow:0 5px 0 #6b3d00, 0 9px 0 #000, 0 0 30px #ffb30088; line-height:1.05;}
   #scrTitle{cursor:pointer; justify-content:space-between;}
   .tstart{margin:0 auto 6vh; background:#000a; color:#fff; padding:8px 22px; border-radius:99px; font-size:16px; animation:blink 1.1s infinite alternate;}
+  .tcredit{position:absolute; right:calc(10px + env(safe-area-inset-right)); bottom:calc(6px + env(safe-area-inset-bottom)); font-size:11px; color:rgba(255,255,255,.62); text-shadow:0 1px 2px #000,0 0 4px #000; pointer-events:none; letter-spacing:.5px;}
   @keyframes blink{from{opacity:.35} to{opacity:1}}
   .ltop{display:flex; align-items:center; gap:10px; padding:8px 12px; flex-shrink:0;}
   .ltop .sp{flex:1} .gt{font-size:20px; color:#ffd54a; text-shadow:0 2px 0 #000;}
@@ -186,6 +187,7 @@
 <div class="scr" id="scrTitle"><div class="tbg"></div>
   <div class="tlogo"><small>과학 복습 디펜스</small><img class="logoimg" src="assets/v2/logo.png" alt="지식의 탑"></div>
   <div class="tstart">화면을 터치하면 시작해요</div>
+  <div class="tcredit">만든 사람 · 충주또박이</div>
 </div>
 <div class="scr" id="scrLobby" hidden><div class="tbg dim"></div>
   <div class="ltop"><b class="gt">지식의 탑</b><span class="sp"></span><span class="pill" id="lbStars">★ 0</span></div>
@@ -493,7 +495,7 @@ function openLobby(tab){ curTab=tab||curTab; show('scrLobby'); $('lbStars').inne
   if(curTab==='dex'){ const have=CARDS.filter(c=>DATA.v2.cards[c.id]).length;
     M.innerHTML=`<div class="panel"><b>과학 카드 도감</b> <span style="color:#ffd54a;font-size:13px">${have}/${CARDS.length}</span><p>카드를 누르면 과학 개념을 볼 수 있어요.</p><div class="dex">${CARDS.map(c=>{ const n=DATA.v2.cards[c.id]; return `<div class="${n?'r-'+c.r:'lock'}" data-id="${c.id}"><img src="${ASSETS[c.id]}" alt="">${n?c.n:'???'}${n>1?` <i>×${n}</i>`:''}</div>`; }).join('')}</div><div class="cdetail" id="cdetail">카드를 눌러 보세요</div></div>`;
     M.querySelectorAll('.dex > div').forEach(e=>e.onclick=()=>{ const c=CARDS.find(x=>x.id===e.dataset.id); $('cdetail').innerHTML= DATA.v2.cards[c.id] ? `<b>${c.n}</b> <small>${c.u}</small><br>${c.t}` : '아직 모으지 못한 카드예요. 뽑기에서 나와요.'; $('cdetail').scrollIntoView({block:'nearest',behavior:'smooth'}); }); }
-  const CREDIT='<div class="panel" style="margin-top:8px"><b>만든 것들</b><p>글꼴: Galmuri11 © 2019–2025 Lee Minseo · <a href="assets/v2/font/ofl-ko.md" target="_blank" style="color:#53d8fb">SIL Open Font License 1.1</a></p></div>';
+  const CREDIT='<div class="panel" style="margin-top:8px"><b>만든 것들</b><p>만든 사람: <b style="display:inline;color:#ffd54a">충주또박이</b></p><p>글꼴: Galmuri11 © 2019–2025 Lee Minseo · <a href="assets/v2/font/ofl-ko.md" target="_blank" style="color:#53d8fb">SIL Open Font License 1.1</a></p></div>';
   if(curTab==='set'){ M.innerHTML=(teacherOK
       ? '<div class="panel"><b>선생님 메뉴</b><p>문제 편집, 우리 반 전용 링크, PIN 변경</p><div class="pinrow"><button id="tcOpen">열기</button></div></div>'
       : '<div class="panel"><b>선생님 메뉴</b><p>문제 편집과 관리 기능은 PIN을 입력해야 열려요.</p><div class="pinrow"><input id="pinIn" type="password" inputmode="numeric" maxlength="4" placeholder="PIN 4자리" style="width:120px"><button id="pinGo">열기</button><span id="pinMsg" style="color:#ff8a8a;font-size:13px"></span></div></div>')+CREDIT;
