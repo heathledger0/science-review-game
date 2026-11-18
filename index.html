@@ -231,7 +231,7 @@
         <p>왼쪽에서 고른 단원의 문제를 담은 링크와 QR코드를 만들어요. 학생이 들어오면 이 문제로 바로 출전 준비 화면이 열려요.</p>
         <div class="pinrow"><button id="lkGen">링크·QR 만들기</button><button id="lkCopy" style="background:#3a365a;color:#fff">링크 복사</button></div>
         <input id="lkOut" type="text" readonly placeholder="버튼을 누르면 링크가 나와요" style="width:100%;margin-top:6px;background:#2a2748;color:#fff;border:2px solid #4a4670;border-radius:8px;padding:7px 9px;font-size:13px">
-        <div id="lkQr" style="display:none;text-align:center;margin-top:8px"><canvas id="lkCv" style="background:#fff;border-radius:10px;width:220px;height:220px;image-rendering:pixelated"></canvas><div class="pinrow" style="justify-content:center"><button id="lkBig">QR 크게 보기</button></div></div>
+        <div id="lkQr" style="display:none;text-align:center;margin-top:8px"><canvas id="lkCv" style="position:static;display:block;margin:0 auto;background:#fff;border-radius:10px;width:220px;height:220px;image-rendering:pixelated"></canvas><div class="pinrow" style="justify-content:center"><button id="lkBig">QR 크게 보기</button></div></div>
         <p id="lkMsg" style="color:#ffd54a"></p>
       </div>
       <div class="panel" style="margin-top:8px">
@@ -534,7 +534,7 @@ function drawQR(cv,text,cell){ if(typeof qrcode!=='function') return 0; let q;
   for(let r=0;r<n;r++) for(let k=0;k<n;k++) if(q.isDark(r,k)) c.fillRect((k+quiet)*cell,(r+quiet)*cell,cell,cell);
   return n; }
 $('lkBig').onclick=()=>{ if(!lastQR) return; const o=document.createElement('div'); o.style.cssText='position:fixed;inset:0;background:#fff;z-index:99;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px';
-  const cv=document.createElement('canvas'); drawQR(cv,lastQR,10); const m=Math.min(innerWidth,innerHeight-40)*0.94; cv.style.cssText=`width:${m}px;height:${m}px;image-rendering:pixelated`;
+  const cv=document.createElement('canvas'); drawQR(cv,lastQR,10); const m=Math.min(innerWidth,innerHeight-40)*0.94; cv.style.cssText=`position:static;width:${m}px;height:${m}px;image-rendering:pixelated`;
   const t=document.createElement('div'); t.textContent='화면을 누르면 닫혀요'; t.style.cssText='color:#555;font-size:14px';
   o.append(cv,t); o.onclick=()=>o.remove(); document.body.append(o); };
 $('lkCopy').onclick=async()=>{ const o=$('lkOut'); if(!o.value){ $('lkMsg').textContent='먼저 링크를 만들어 주세요'; return; }
