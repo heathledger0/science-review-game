@@ -78,6 +78,9 @@
   .panel code{background:#2a2748; padding:1px 5px; border-radius:4px; color:#ffe9a8;}
   .gbadge{display:inline-block; font-size:10px; font-weight:800; color:#111; background:var(--g); border-radius:5px; padding:0 5px; vertical-align:middle; line-height:16px;}
   .hero .shd{font-size:11px; color:#9a96b8; margin-top:4px;}
+  .gg{filter:drop-shadow(0 0 2px var(--gg)) drop-shadow(0 0 5px var(--gg));}
+  .gg-ssr{animation:ggssr 2.4s linear infinite;}
+  @keyframes ggssr{0%{filter:drop-shadow(0 0 3px #ff7ad9) drop-shadow(0 0 6px #ff7ad9)}25%{filter:drop-shadow(0 0 3px #ffd54a) drop-shadow(0 0 6px #ffd54a)}50%{filter:drop-shadow(0 0 3px #7dff9a) drop-shadow(0 0 6px #7dff9a)}75%{filter:drop-shadow(0 0 3px #53d8fb) drop-shadow(0 0 6px #53d8fb)}100%{filter:drop-shadow(0 0 3px #ff7ad9) drop-shadow(0 0 6px #ff7ad9)}}
   .hero.locked .hsp{filter:brightness(0) opacity(.5);} .hero.locked{border-style:dashed; cursor:pointer;}
   .ph{box-shadow:inset 0 -3px 0 var(--g);} .ph.locked{opacity:.45; cursor:default;} .ph.locked img{filter:brightness(0) opacity(.5);}
   .ult{box-shadow:0 0 0 3px var(--g, transparent);}
@@ -139,7 +142,7 @@
   .tunep select{background:#2a2748; color:#fff; border:2px solid #4a4670; border-radius:6px; padding:3px 4px; font-size:13px;}
   .cutin{position:absolute; inset:0; pointer-events:none; opacity:0; z-index:6; overflow:hidden;}
   .cutin.play{animation:ciFade var(--dur) ease forwards;}
-  .cutin .bg{position:absolute; inset:0; background:#000a;}
+  .cutin .bg{position:absolute; inset:0; background:radial-gradient(circle at 35% 50%, var(--gc,#0000) 0%, #000c 70%);}
   .cutin .band{position:absolute; left:-10%; right:-10%; top:28%; height:44%; background:linear-gradient(90deg, var(--hc), #fff3 60%, var(--hc)); transform:skewY(-6deg) translateX(-120%); display:flex; align-items:center; gap:18px; padding-left:18%; box-shadow:0 0 30px var(--hc);}
   .cutin.play .band{animation:ciBand var(--dur) cubic-bezier(.2,.9,.3,1) forwards;}
   .cutin .port{width:150px; height:150px; position:relative; flex-shrink:0; margin-top:-30px; filter:drop-shadow(0 4px 0 #000) drop-shadow(0 0 10px #fff8);} .cutin .port img{width:100%; height:100%; object-fit:contain; image-rendering:pixelated;}
@@ -392,6 +395,8 @@ if(!DATA.v2){ DATA.v2={heroes:[], cards:{}};
   saveData(); }
 const owned=i=>DATA.v2.heroes.includes(i);
 const hgrade=i=>(DATA.charGrades[i]&&DATA.charGrades[i].grade)||'C';
+const SSR_COLS=['#ff7ad9','#ffd54a','#7dff9a','#53d8fb','#c48bff'];
+const gglow=i=>{ const g=hgrade(i); if(g==='C') return ''; if(g==='SSR') return ' gg-ssr'; return ` gg" style="--gg:${GCOL[g]}`; };
 const gbadge=i=>`<span class="gbadge" style="--g:${GCOL[hgrade(i)]}">${hgrade(i)}</span>`;
 function addShard(i){ const e=DATA.charGrades[i]; const k=GRADE_ORDER.indexOf(e.grade); if(k>=GRADE_ORDER.length-1) return {i,capped:true};
   e.shards++; if(e.shards>=3){ e.shards=0; e.grade=GRADE_ORDER[k+1]; return {i,up:e.grade}; } return {i}; }
@@ -479,14 +484,14 @@ const TABS=[['home','홈'],['heroes','영웅'],['gacha','뽑기'],['dex','도감
 function openLobby(tab){ curTab=tab||curTab; show('scrLobby'); $('lbStars').innerHTML='★ '+totalStars()+' &nbsp;✦ '+DATA.starDust;
   $('tabs').innerHTML=''; TABS.forEach(([id,nm])=>{ const b=document.createElement('button'); b.textContent=nm; b.className=id===curTab?'on':''; b.onclick=()=>openLobby(id); $('tabs').appendChild(b); });
   const M=$('lobbyMain'); const h=S.hero;
-  if(curTab==='home'){ M.innerHTML=`<div class="lhome"><img src="${ASSETS['hero_'+h.img]}" alt=""><div><div class="who">출전 영웅 <b>${h.name}</b><br>필살기 · ${h.ult}</div><button class="bigbtn play" id="goStage">게임 시작</button></div></div>`; $('goStage').onclick=()=>openStage(); }
+  if(curTab==='home'){ M.innerHTML=`<div class="lhome"><img class="${gglow(HEROES.indexOf(h))}" src="${ASSETS['hero_'+h.img]}" alt=""><div><div class="who">출전 영웅 <b>${h.name}</b><br>필살기 · ${h.ult}</div><button class="bigbtn play" id="goStage">게임 시작</button></div></div>`; $('goStage').onclick=()=>openStage(); }
   if(curTab==='home'){ const hi=HEROES.indexOf(h); $('lobbyMain').querySelector('.who b').insertAdjacentHTML('afterend',' '+gbadge(hi)); }
   if(curTab==='heroes'){ M.innerHTML='<div class="heroes" id="heroes"></div>'; HEROES.forEach((x,i)=>{ const d=document.createElement('div'); const own=owned(i); const e=DATA.charGrades[i];
       d.className='hero'+(x===S.hero?' sel':'')+(own?'':' locked');
-      d.innerHTML= own ? `<img class="hsp" src="${ASSETS['hero_'+x.img]}" alt=""><h3>${x.name} ${gbadge(i)}</h3><div class="un">필살기 · ${x.ult}</div><div class="ud">${x.desc}</div><div class="shd">${hgrade(i)==='SSR'?'최고 등급!':`다음 등급까지 조각 ${e.shards}/3`}</div>`
+      d.innerHTML= own ? `<img class="hsp${gglow(i)}" src="${ASSETS['hero_'+x.img]}" alt=""><h3>${x.name} ${gbadge(i)}</h3><div class="un">필살기 · ${x.ult}</div><div class="ud">${x.desc}</div><div class="shd">${hgrade(i)==='SSR'?'최고 등급!':`다음 등급까지 조각 ${e.shards}/3`}</div>`
                        : `<img class="hsp" src="${ASSETS['hero_'+x.img]}" alt=""><h3>???</h3><div class="ud">아직 없는 영웅이에요.<br>뽑기에서 얻거나 교환소에서 별조각 ${HERO_PRICE}개로 데려올 수 있어요.</div>`;
       d.onclick=()=>{ if(!own) return openLobby('gacha'); S.hero=x; SAVE.hero=x.img; save(); openLobby('heroes'); }; $('heroes').appendChild(d); });
-    M.insertAdjacentHTML('beforeend','<p style="color:#9a96b8;font-size:12px;margin:8px 0 0">등급은 겉모습만 바뀌어요. 영웅이 겹치거나 카드가 겹치면 조각이 모여요.</p>'); }
+    M.insertAdjacentHTML('beforeend','<p style="color:#9a96b8;font-size:12px;margin:8px 0 0">등급이 오르면 영웅의 테두리 빛과 필살기 연출 색이 바뀌어요(능력은 같아요). 영웅이 겹치거나 카드가 겹치면 조각이 모여요.</p>'); }
   if(curTab==='gacha'){ const O=odds(); const pct=v=>(v*100).toFixed(1)+'%'; const D=DIFFS.find(d=>d.id===SAVE.diff)||DIFFS[1];
     const shop=HEROES.map((x,i)=>owned(i)?'':`<div class="shopi"><img src="${ASSETS['port_'+x.img]}" alt=""><div><b>${x.name}</b><small>필살기 · ${x.ult}</small></div><button data-i="${i}" ${DATA.starDust<HERO_PRICE?'disabled':''}>✦ ${HERO_PRICE}</button></div>`).join('');
     M.innerHTML=`<div class="gbox"><div class="panel"><b>별조각 뽑기</b> <span class="pill" style="float:right">✦ ${DATA.starDust}</span>
@@ -698,7 +703,7 @@ function answer(o,btn){
   document.querySelectorAll('#choices button').forEach(b=>{ b.disabled=true; if(b.textContent===S.q.c) b.classList.add('correct'); });
   if(ok){
     SND.sfx('correct'); S.correct++; S.combo++; S.maxCombo=Math.max(S.maxCombo,S.combo);
-    const gain = S.combo>=3 ? Math.round(cfg.gauge*1.5) : cfg.gauge;
+    const gain = Math.round((S.combo>=3 ? cfg.gauge*1.5 : cfg.gauge)*(1+0.1*S.hlv));
     S.gauge=Math.min(100,S.gauge+gain); S.gold+=cfg.reward;
     for(const m of S.monsters) if(m.k==='boss'){ S.fx.push({type:'beam',x:m.x,y:m.y,t:0.45,c:'#ffe066'}); S.fx.push({type:'boom',x:m.x,y:m.y,r:8,max:50,t:0.4,c:'#ffe066'}); hit(m,m.max*0.08); S.shake=Math.max(S.shake,7); floatText(m.x,m.y-m.r-22,'정답 일격!','#ffe066',16); }
     S.fx.push({type:'ring',x:BASE[0]+4,y:BASE[1]-14,r:6,max:48,t:0.45,c:'#7dff9a'}); S.fx.push({type:'rays',x:BASE[0]+4,y:BASE[1]-14,t:0.5,max:0.5,c:'#b8ffcb'}); burst(BASE[0]+4,BASE[1]-24,10,['#7dff9a','#ffffff','#ffe066'],80,2.6);
@@ -760,6 +765,7 @@ function sched(t,fn){ S.sched.push({t,fn}); }
 function playCutin(dur){
   const el=$('cutin'), h=S.hero;
   el.style.setProperty('--hc',h.color); el.style.setProperty('--dur',dur+'s');
+  { const g=hgrade(HEROES.indexOf(h)); el.style.setProperty('--gc', g==='C'?'#0000': (g==='SSR'?SSR_COLS[(Math.random()*5)|0]:GCOL[g])+'99'); }
   $('ciPort').innerHTML=`<img src="${ASSETS['port_'+h.img]}" alt="">`; $('ciName').textContent=h.name+' ['+hgrade(HEROES.indexOf(h))+']'+(S.hlv?` Lv${S.hlv}`:''); $('ciUlt').textContent=h.ult+'!';
   el.classList.remove('play'); void el.offsetWidth; el.classList.add('play');
 }
@@ -778,7 +784,9 @@ function checkUltEnd(){
 }
 $('hup').onclick=()=>{
   if(S.hlv>=5 || !S.running || !canUp('hero')) return; const c=HERO_UP[S.hlv]; if(S.gold<c) return;
-  S.gold-=c; S.hlv++; S.shake=5; SND.sfx('upgrade'); floatText(LW-120, LH-30, `${S.hero.name} 강화! Lv${S.hlv} (필살기 +${S.hlv*25}%)`, '#ffd54a', 16); updateHUD();
+  S.gold-=c; S.hlv++; S.shake=5; SND.sfx('upgrade'); S.gauge=Math.min(100,S.gauge+20);
+  { const hx=BASE[0]-36, hy=BASE[1]+2; burst(hx,hy,16,['#ffe066','#ffffff','#ffb23d'],110,3); S.fx.push({type:'ring',x:hx,y:hy,r:6,max:44,t:0.45,c:'#ffd54a'}); }
+  floatText(LW-120, LH-30, `${S.hero.name} 강화! Lv${S.hlv} · 필살기 +${S.hlv*25}% · 게이지 +20%`, '#ffd54a', 15); updateHUD();
 };
 // ---------- 타워 건설 ----------
 const bm=$('buildmenu'); let bmSlot=-1;
@@ -922,7 +930,16 @@ function draw(dtReal){
   // 기지
   ctx.textAlign='center';
   if(!spr('tower_basic_up',BASE[0]+4,BASE[1]+20,62)){ ctx.fillStyle='#4a4a5a'; ctx.fillRect(BASE[0]-14,BASE[1]-30,28,44); }
-  spr('hero_'+S.hero.img, BASE[0]-36, BASE[1]+24+Math.sin(S.t*3)*1, 48, true);
+  { const key='hero_'+S.hero.img, hx=BASE[0]-36, hy=BASE[1]+24+Math.sin(S.t*3)*1, L=S.hlv, g=hgrade(HEROES.indexOf(S.hero));
+    if(L>0){ // 강화 기운: 단계가 높을수록 크고 진하게
+      const pr=0.75+0.25*Math.sin(S.t*4), R=22+L*5;
+      const gr=ctx.createRadialGradient(hx,hy-22,2,hx,hy-22,R); gr.addColorStop(0,`rgba(255,213,74,${(0.28+0.1*L)*pr})`); gr.addColorStop(1,'rgba(255,213,74,0)');
+      ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(hx,hy-22,R,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#ffe98a'; for(let i=0;i<L*2;i++){ const ph=(S.t*0.9+i*0.37)%1; const sx=hx+Math.sin(i*2.3+S.t*2)*14; ctx.globalAlpha=1-ph; ctx.fillRect(sx-1.5,hy-4-ph*52,3,3); } ctx.globalAlpha=1; }
+    if(g!=='C'){ const col= g==='SSR' ? SSR_COLS[Math.floor(S.t*2)%5] : GCOL[g];
+      for(const [dx,dy] of [[-1.6,0],[1.6,0],[0,-1.6],[0,1.6]]) sprTint(key,col,0.85,hx+dx,hy+dy,48,true); }
+    spr(key,hx,hy,48,true);
+    if(L>0){ ctx.font='bold 11px sans-serif'; ctx.textAlign='center'; ctx.lineWidth=3; ctx.strokeStyle='#000'; const t=L>=5?'MAX':'Lv'+L; ctx.strokeText(t,hx,hy-52); ctx.fillStyle=L>=5?'#ff9a3d':'#ffd54a'; ctx.fillText(t,hx,hy-52); } }
   ctx.fillStyle='#fff'; ctx.font='bold 10px sans-serif'; ctx.strokeStyle='#000'; ctx.lineWidth=3; ctx.strokeText('지식의 탑',BASE[0]+4,BASE[1]+32); ctx.fillText('지식의 탑',BASE[0]+4,BASE[1]+32);
   if(S.shieldT>0){ const R=38+Math.sin(S.t*8)*2; const g=ctx.createRadialGradient(BASE[0],BASE[1]-8,R*0.3,BASE[0],BASE[1]-8,R); g.addColorStop(0,'rgba(255,226,122,0.05)'); g.addColorStop(1,'rgba(255,226,122,0.45)'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(BASE[0],BASE[1]-8,R,Math.PI,0); ctx.lineTo(BASE[0]+R,BASE[1]+14); ctx.lineTo(BASE[0]-R,BASE[1]+14); ctx.closePath(); ctx.fill(); ctx.strokeStyle='#ffe27a'; ctx.lineWidth=3; ctx.stroke();
     for(let i=-2;i<=2;i++){ ctx.globalAlpha=0.5; ctx.beginPath(); ctx.moveTo(BASE[0]+i*16,BASE[1]+14); ctx.lineTo(BASE[0]+i*9,BASE[1]-8-Math.sqrt(Math.max(0,R*R-(i*16)**2))*0.9); ctx.stroke(); ctx.globalAlpha=1; }
