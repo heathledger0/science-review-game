@@ -277,7 +277,7 @@ function nextQ(){ if(G.qi>=G.qs.length){ G.qs=shuffle(G.qs); G.qi=0; } return G.
 function ask(kind){ // kind: 'lv' | 'chest'
   G.pause=true; joy.on=false; const q=nextQ(); const opts=shuffle([q.a,...q.w.slice(0,3)]);
   $('ov').hidden=false;
-  const tag= kind==='lv' ? `레벨 업! Lv ${G.lv} · 맞히면 강화 카드 3장 중 골라요` : '보물상자! 맞히면 강화 2개를 얻어요';
+  const tag= kind==='lv' ? `레벨 업! Lv ${G.lv} · 맞히면 강화 카드 3장 중 골라요 (틀리면 없음)` : '보물상자! 맞히면 강화 2개 (틀리면 없음)';
   $('pan').innerHTML=`<div class="tag g">${tag}</div><div class="q">${q.q}</div><div class="chs">${opts.map(o=>`<button>${o}</button>`).join('')}</div><div class="msg" id="msg"></div>`;
   [...$('pan').querySelectorAll('.chs button')].forEach(b=>b.onclick=()=>{
     if(b.dataset.done) return; [...$('pan').querySelectorAll('.chs button')].forEach(x=>{ x.dataset.done=1; if(x.textContent===q.a) x.classList.add('ok'); });
@@ -286,7 +286,8 @@ function ask(kind){ // kind: 'lv' | 'chest'
       if(G.boss && G.boss.hp>0){ const bd=G.boss.max*0.08; hitE(G.boss,bd,true); G.fx.push({t:'beam',x1:G.p.x,y1:G.p.y-200,x2:G.boss.x,y2:G.boss.y,life:0.5,l0:0.5}); $('msg').innerHTML+=' · 보스에게 정답 일격!'; }
       setTimeout(()=> kind==='lv' ? cards(3,true) : cards(2,false,true), 650); }
     else { b.classList.add('no'); sfx('wrong'); $('msg').innerHTML=`<b style="color:#ff6b81">아쉬워요!</b> 정답은 <b style="color:#7dff9a">${q.a}</b>`;
-      setTimeout(()=> kind==='lv' ? cards(1,false) : resume('체력을 조금 회복했어요', ()=>{ G.p.hp=Math.min(G.p.max,G.p.hp+15); }), 1500); }
+      $('msg').innerHTML+= kind==='lv' ? '<br>이번 레벨업 강화는 없어요' : '<br>보물상자가 사라졌어요';
+      setTimeout(()=>{ $('msg').innerHTML+=`<br><button class="btn g" id="okb">계속!</button>`; $('okb').onclick=()=>resume(); }, 900); }
   });
 }
 function offers(){ const out=[];
