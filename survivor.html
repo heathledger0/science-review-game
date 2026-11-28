@@ -244,8 +244,8 @@ function spawnLogic(dt){
     for(let i=0;i<n;i++){ const e=addEnemy('mob','mob_'+mobs[i%mobs.length]); const a=a0+i/n*6.28; e.x=clamp(G.p.x+Math.cos(a)*R,10,WORLD.w-10); e.y=clamp(G.p.y+Math.sin(a)*R,10,WORLD.h-10); } }
   while(G.spawnAcc>=1 && G.en.length<260){ G.spawnAcc--; const fast=Math.random()<Math.min(0.35,t/400); addEnemy(fast?'fast':'mob','mob_'+mobs[Math.random()*mobs.length|0]); }
   for(const mt of MINI_T) if(t>=mt && !G.miniDone.includes(mt)){ G.miniDone.push(mt); const mk=G.u.mini?G.u.mini:'mini_'+(DOM_MINI[G.u.dom]||'turtle');
-    addEnemy('mini',mk); banner('⚠ 중간 보스 등장! 쓰러뜨리면 보물상자'); sfx('boss_appear'); }
-  if(t>=BOSS_T && !G.bossOn){ G.bossOn=true; G.boss=addEnemy('boss','boss_'+G.u.boss); banner(`⚠ ${BOSSN[G.u.boss]||'최종 보스'} 등장! 정답을 맞히면 보스에게 일격!`); sfx('boss_appear'); G.shake=12; }
+    { const m=addEnemy('mini',mk); const f=1+Math.max(0,G.lv-8)*0.04; m.hp=m.max=Math.round(m.max*f); } banner('⚠ 중간 보스 등장! 쓰러뜨리면 보물상자'); sfx('boss_appear'); }
+  if(t>=BOSS_T && !G.bossOn){ G.bossOn=true; G.boss=addEnemy('boss','boss_'+G.u.boss); { const f=1+Math.max(0,G.lv-15)*0.07; G.boss.hp=G.boss.max=Math.round(G.boss.max*f); } banner(`⚠ ${BOSSN[G.u.boss]||'최종 보스'} 등장! 정답을 맞히면 보스에게 일격!`); sfx('boss_appear'); G.shake=12; }
 }
 let bannerT=0, bannerTxt='';
 function banner(s){ bannerTxt=s; bannerT=2.6; }
